@@ -7,6 +7,7 @@ import {
 } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
 import type { ReactNode } from "react";
+import { ERDProvider } from "~/contexts/ERDContext";
 
 import "./tailwind.css";
 
@@ -42,5 +43,9 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <ERDProvider>
+      <Outlet />
+    </ERDProvider>
+  );
 }

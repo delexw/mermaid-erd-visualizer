@@ -385,4 +385,16 @@
   .responsive-margin {
     margin: clamp(0.25rem, 1vw, 1rem);
   }
+
+  /* Uploader overlay styles */
+  .uploader-overlay {
+    z-index: 1000;
+    max-width: 350px;
+    backdrop-filter: blur(8px);
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+
+  .uploader-overlay:hover {
+    background-color: rgba(255, 255, 255, 1);
+  }
 }

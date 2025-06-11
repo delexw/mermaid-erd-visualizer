@@ -15,14 +15,20 @@ export interface Table {
   position?: { x: number; y: number };
 }
 
+export interface CardinalityInfo {
+  type: 'zero-or-one' | 'exactly-one' | 'zero-or-more' | 'one-or-more';
+  marker: string;
+}
+
 export interface Relationship {
   id: string;
   fromTable: string;
   toTable: string;
   type: 'one-to-one' | 'one-to-many' | 'many-to-many';
-  fromField?: string;
-  toField?: string;
   description?: string;
+  isIdentifying?: boolean;
+  leftCardinality?: CardinalityInfo;
+  rightCardinality?: CardinalityInfo;
 }
 
 export interface ERDData {
@@ -43,4 +49,27 @@ export interface NavigationItem {
   name: string;
   type: 'table' | 'relationship';
   category?: string;
+}
+
+// Parser-specific types
+export interface ParseError {
+  line: number;
+  message: string;
+  context?: string;
+  type?: 'error' | 'warning';
+}
+
+export interface ParsedERD {
+  tables: Table[];
+  relationships: Relationship[];
+  originalDiagram: string;
+  warnings?: ParseError[];
+}
+
+export type ParseResult = {
+  success: true;
+  data: ParsedERD;
+} | {
+  success: false;
+  errors: ParseError[];
 } 

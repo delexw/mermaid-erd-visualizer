@@ -27,9 +27,8 @@ export interface TableInfoError {
 export type TableInfoResult = TableInfo | TableInfoError;
 
 // Constants
-export const ENTITY_ID_PREFIX = 'entity-';
-export const MIN_ZOOM_LEVEL = 0.1;
-export const MAX_ZOOM_LEVEL = 20;
+export const MIN_ZOOM_LEVEL = 0.01;
+export const MAX_ZOOM_LEVEL = 5;
 
 // Parse SVG viewBox string into structured data
 export const parseViewBox = (viewBoxString: string | null): ViewBox | null => {
@@ -50,35 +49,21 @@ export const parseViewBox = (viewBoxString: string | null): ViewBox | null => {
 export const parseElementTransform = (transformAttr: string | null): Point2D => {
   if (!transformAttr) return { x: 0, y: 0 };
 
-  const translateMatch = transformAttr.match(/translate\(([^,]+),\s*([^)]+)\)/);
+  // Handle both D3-style and SVG-style transform strings
+  const translateMatch = transformAttr.match(/translate\(([^,]+)(?:,\s*([^)]+))?\)/);
   if (!translateMatch) return { x: 0, y: 0 };
 
   return {
-    x: parseFloat(translateMatch[1]),
-    y: parseFloat(translateMatch[2])
+    x: parseFloat(translateMatch[1]) || 0,
+    y: parseFloat(translateMatch[2]) || 0
   };
 };
 
-// Find table element by name in Mermaid-generated SVG
+// Find table element by name in custom renderer SVG structure
 export const findTableElement = (svgElement: SVGElement, tableName: string): Element | null => {
-  const nodeLabels = Array.from(svgElement.querySelectorAll('span.nodeLabel p'));
-  const matchingLabel = nodeLabels.find(p =>
-    p.textContent?.trim() === tableName
-  );
-
-  if (!matchingLabel) return null;
-
-  // Find the parent g element with entity ID pattern
-  let currentElement = matchingLabel.parentElement;
-  while (currentElement) {
-    if (currentElement.tagName === 'g' &&
-      currentElement.id?.startsWith(`${ENTITY_ID_PREFIX}${tableName}-`)) {
-      return currentElement;
-    }
-    currentElement = currentElement.parentElement;
-  }
-
-  return null;
+  // In the custom renderer, tables are stored in g elements with data-table-id attribute
+  // Since table ID is the same as table name, we can find it directly
+  return svgElement.querySelector(`g[data-table-id="${tableName}"]`);
 };
 
 // Calculate optimal zoom scale for a table element

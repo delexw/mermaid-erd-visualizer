@@ -3,14 +3,12 @@ import { erdData } from "~/data/erd-data";
 interface HeaderProps {
   selectedTable: string | null;
   selectedRelationship: string | null;
-  onClearSelection: () => void;
   onToggleSidebar: () => void;
 }
 
 export default function Header({
   selectedTable,
   selectedRelationship,
-  onClearSelection,
   onToggleSidebar,
 }: HeaderProps) {
   return (
@@ -30,37 +28,11 @@ export default function Header({
 
           <div>
             <h1 className="responsive-text font-bold text-secondary-900">
-              Marketplace Database Schema
+              Database Schema
             </h1>
             <p className="text-secondary-600 text-xs sm:text-sm hidden sm:block">
               Interactive Entity Relationship Diagram Explorer
             </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-4">
-          {/* Stats - Hidden on mobile */}
-          <div className="hidden sm:flex items-center gap-3 lg:gap-4 text-xs sm:text-sm text-secondary-600">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 bg-primary-500 rounded"></div>
-              <span>{erdData.tables.length} Tables</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 bg-secondary-400 rounded"></div>
-              <span>{erdData.relationships.length} Relationships</span>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            <button
-              onClick={onClearSelection}
-              className="btn-secondary text-xs px-2 py-1 sm:px-3 sm:py-2 focus-ring"
-              disabled={!selectedTable && !selectedRelationship}
-            >
-              <span className="hidden sm:inline">Clear Selection</span>
-              <span className="sm:hidden">Clear</span>
-            </button>
           </div>
         </div>
       </div>
@@ -77,6 +49,7 @@ export default function Header({
                 <div className="flex flex-wrap items-center gap-1">
                   <span className="font-medium text-primary-800 text-sm">Selected Table:</span>
                   <span className="text-primary-700 break-all text-sm">{selectedTable}</span>
+                  <span className="text-primary-600 text-xs">(click again to deselect)</span>
                 </div>
                 {(() => {
                   const table = erdData.tables.find(t => t.id === selectedTable);
