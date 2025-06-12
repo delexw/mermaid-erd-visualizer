@@ -154,8 +154,13 @@ export class ERDRenderer {
 
   private setupLegend(): void {
     if (this.config.showLegend !== false) {
-      // Default to true
-      this.legendComponent = new LegendComponent(this.svg, this.config.legendConfig);
+      // Default to responsive positioning
+      const legendConfig = {
+        responsive: true,
+        position: 'bottom-right' as const,
+        ...this.config.legendConfig,
+      };
+      this.legendComponent = new LegendComponent(this.svg, legendConfig);
     }
   }
 

@@ -22,6 +22,7 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<ERDRenderer | null>(null);
   const [showRelationships, setShowRelationships] = useState(true);
+  const [showLegend, setShowLegend] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showLayoutControls, setShowLayoutControls] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -94,7 +95,6 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
 
   // Handle table selection from external source
   useEffect(() => {
-
     if (rendererRef.current && dataLoaded) {
       // Update renderer selection state to match external selection
       rendererRef.current.selectTable(selectedTable);
@@ -147,6 +147,8 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
   };
 
   const handleToggleLegend = () => {
+    const newVisibility = !showLegend;
+    setShowLegend(newVisibility);
     rendererRef.current?.toggleLegend();
   };
 
@@ -181,8 +183,8 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
             onClick={() => setShowLayoutControls(!showLayoutControls)}
             disabled={isLoading}
             className={`p-2 rounded-md transition-colors focus-ring ${showLayoutControls
-              ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-              : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+                ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
               } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title="Layout options"
           >
@@ -201,8 +203,8 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
             onClick={handleToggleRelationships}
             disabled={isLoading}
             className={`p-2 rounded-md transition-colors focus-ring ${showRelationships
-              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-              : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
               } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={showRelationships ? 'Hide relationships' : 'Show relationships'}
           >
@@ -256,8 +258,11 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={handleToggleLegend}
             disabled={isLoading}
-            className={`p-2 rounded-md hover:bg-secondary-100 transition-colors focus-ring ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title="Toggle legend"
+            className={`p-2 rounded-md transition-colors focus-ring ${showLegend
+                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={showLegend ? 'Hide legend' : 'Show legend'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

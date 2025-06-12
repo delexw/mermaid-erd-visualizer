@@ -1,315 +1,331 @@
-import type { Selection } from 'd3-selection';
+import { select, type Selection } from 'd3-selection';
 
 import { MarkerDefinitions } from '../utils/markerDefinitions';
 
 export interface LegendConfig {
-  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
   padding?: number;
   backgroundColor?: string;
   borderColor?: string;
   textColor?: string;
   show?: boolean;
+  responsive?: boolean;
+  className?: string;
 }
 
 interface LegendItem {
   type: string;
   label: string;
   symbol: string;
+  category: 'cardinality' | 'relationship';
 }
 
 export class LegendComponent {
-  private svg: Selection<SVGSVGElement, unknown, null, undefined>;
-  private legendGroup: Selection<SVGGElement, unknown, null, undefined>;
+  private container: HTMLElement;
+  private legendElement: HTMLDivElement;
   private config: Required<LegendConfig>;
   private isVisible: boolean = true;
+  private svg: Selection<SVGSVGElement, unknown, null, undefined>;
 
   constructor(svg: Selection<SVGSVGElement, unknown, null, undefined>, config: LegendConfig = {}) {
     this.svg = svg;
     this.config = {
       position: config.position || 'bottom-right',
-      padding: config.padding || 12,
+      padding: config.padding || 16,
       backgroundColor: config.backgroundColor || '#ffffff',
       borderColor: config.borderColor || '#e5e7eb',
       textColor: config.textColor || '#374151',
-      show: config.show || true,
+      show: config.show !== false,
+      responsive: config.responsive !== false,
+      className: config.className || '',
     };
 
-    this.legendGroup = svg.append('g').attr('class', 'legend-group').style('pointer-events', 'all');
+    // Get the container element (parent of SVG)
+    const svgNode = svg.node();
+    if (!svgNode?.parentElement) {
+      throw new Error('SVG must have a parent element to create legend overlay');
+    }
 
-    this.createMarkerDefinitions();
-    this.render();
+    this.container = svgNode.parentElement;
+    this.legendElement = this.createLegendElement();
+
+    if (this.config.show) {
+      this.render();
+    }
   }
 
-  private createMarkerDefinitions(): void {
-    const markerDefs = MarkerDefinitions.getInstance();
+  private createLegendElement(): HTMLDivElement {
+    const legend = document.createElement('div');
+    legend.className = `erd-legend ${this.config.className}`.trim();
 
-    // Create small size markers for legend
-    markerDefs.createAllMarkers(this.svg, {
-      size: 'small',
-      highlighted: false,
-      prefix: 'legend-',
-    });
+    // Ensure the container has relative positioning
+    if (window.getComputedStyle(this.container).position === 'static') {
+      this.container.style.position = 'relative';
+    }
+
+    this.container.appendChild(legend);
+    return legend;
   }
 
   private render(): void {
     if (!this.config.show) {
-      this.legendGroup.style('display', 'none');
+      this.legendElement.style.display = 'none';
       return;
     }
 
-    this.legendGroup.style('display', 'block');
-    this.legendGroup.selectAll('*').remove();
+    this.legendElement.style.display = 'block';
+    this.applyStyles();
+    this.renderContent();
+  }
 
-    // Organize items into two categories with shorter labels for better fit
-    const cardinalityItems = [
-      { label: '0 or 1', type: 'zero-or-one', symbol: 'o|' },
-      { label: 'Exactly 1', type: 'one', symbol: '||' },
-      { label: '0 or many', type: 'zero-or-more', symbol: 'o{' },
-      { label: '1 or many', type: 'one-or-more', symbol: '}|' },
+  private applyStyles(): void {
+    // Base Tailwind classes
+    const baseClasses = [
+      'absolute',
+      'z-50',
+      'bg-white',
+      'border',
+      'border-gray-200',
+      'rounded-lg',
+      'shadow-lg',
+      'font-sans',
+      'text-sm',
+      'text-gray-700',
+      'min-w-72',
+      'max-w-80',
+      'pointer-events-auto',
     ];
 
-    const relationshipItems = [
-      { label: 'Identifying', type: 'solid-line', symbol: '——' },
-      { label: 'Non-identifying', type: 'dashed-line', symbol: '••' },
-    ];
-
-    // Two-column layout dimensions
-    const itemHeight = 22;
-    const sectionSpacing = 16; // Horizontal spacing between columns
-    const titleHeight = 18;
-    const padding = 12;
-    const columnWidth = 140; // Width of each column
-    const sectionHeaderHeight = 16;
-
-    // Calculate total dimensions for two-column layout
-    const maxCardinalityItems = cardinalityItems.length;
-    const maxRelationshipItems = relationshipItems.length;
-    const maxItemsInColumn = Math.max(maxCardinalityItems, maxRelationshipItems);
-    const columnHeight = maxItemsInColumn * itemHeight;
-    const totalHeight = titleHeight + sectionHeaderHeight + columnHeight + padding * 3;
-    const totalWidth = columnWidth * 2 + sectionSpacing + padding * 2; // Two columns + spacing + padding
-
-    // Create enhanced background rectangle with gradient
-    this.legendGroup
-      .append('rect')
-      .attr('class', 'legend-background')
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('width', totalWidth)
-      .attr('height', totalHeight)
-      .attr('rx', 6)
-      .attr('ry', 6)
-      .attr('fill', this.config.backgroundColor)
-      .attr('stroke', this.config.borderColor)
-      .attr('stroke-width', 1.5)
-      .style('filter', 'drop-shadow(0 2px 8px rgba(0,0,0,0.15))');
-
-    let currentY = padding;
-
-    // Title with improved sizing
-    this.legendGroup
-      .append('text')
-      .attr('x', totalWidth / 2)
-      .attr('y', currentY + 12)
-      .attr('text-anchor', 'middle')
-      .attr('font-family', 'Inter, sans-serif')
-      .attr('font-size', '12px')
-      .attr('font-weight', '600')
-      .attr('fill', this.config.textColor)
-      .text('ERD Notation');
-
-    currentY += titleHeight + padding;
-
-    // Left Column - Cardinality section with colored background
-    const leftColumnX = padding;
-    const rightColumnX = padding + columnWidth + sectionSpacing;
-
-    // Cardinality section background
-    this.legendGroup
-      .append('rect')
-      .attr('x', leftColumnX - 4)
-      .attr('y', currentY - 4)
-      .attr('width', columnWidth + 8)
-      .attr('height', sectionHeaderHeight + cardinalityItems.length * itemHeight + 8)
-      .attr('rx', 4)
-      .attr('fill', '#eff6ff') // Light blue background
-      .attr('stroke', '#dbeafe')
-      .attr('stroke-width', 1);
-
-    // Cardinality section header
-    this.legendGroup
-      .append('text')
-      .attr('x', leftColumnX + 4)
-      .attr('y', currentY + 12)
-      .attr('font-family', 'Inter, sans-serif')
-      .attr('font-size', '10px')
-      .attr('font-weight', '600')
-      .attr('fill', '#1e40af')
-      .text('CARDINALITY');
-
-    // Render cardinality items
-    cardinalityItems.forEach((item, index) => {
-      const yPos = currentY + sectionHeaderHeight + index * itemHeight;
-      this.drawCompactItem(item, leftColumnX + 4, yPos, 'cardinality', columnWidth - 8);
-    });
-
-    // Right Column - Relationship section with colored background
-    this.legendGroup
-      .append('rect')
-      .attr('x', rightColumnX - 4)
-      .attr('y', currentY - 4)
-      .attr('width', columnWidth + 8)
-      .attr('height', sectionHeaderHeight + relationshipItems.length * itemHeight + 8)
-      .attr('rx', 4)
-      .attr('fill', '#f0fdf4') // Light green background
-      .attr('stroke', '#dcfce7')
-      .attr('stroke-width', 1);
-
-    // Relationship section header
-    this.legendGroup
-      .append('text')
-      .attr('x', rightColumnX + 4)
-      .attr('y', currentY + 12)
-      .attr('font-family', 'Inter, sans-serif')
-      .attr('font-size', '10px')
-      .attr('font-weight', '600')
-      .attr('fill', '#166534')
-      .text('RELATIONSHIP');
-
-    // Render relationship items
-    relationshipItems.forEach((item, index) => {
-      const yPos = currentY + sectionHeaderHeight + index * itemHeight;
-      this.drawCompactItem(item, rightColumnX + 4, yPos, 'relationship', columnWidth - 8);
-    });
-
-    // Position the legend
-    this.positionLegend(totalWidth, totalHeight);
-  }
-
-  private drawCompactItem(
-    item: LegendItem,
-    x: number,
-    y: number,
-    category: string,
-    columnWidth: number = 140
-  ): void {
-    const iconX = x;
-    const textX = x + 26; // Icon to text spacing
-    const centerY = y + 11; // Adjusted for new item height
-    const symbolX = x + columnWidth - 8; // Position symbol relative to column width
-
-    if (category === 'cardinality') {
-      // Draw cardinality marker
-      this.drawCardinalityMarker(iconX + 10, centerY, item.type);
-    } else {
-      // Draw relationship line
-      this.drawRelationshipLine(iconX, centerY, item.type);
+    // Apply custom background and border colors if specified
+    if (this.config.backgroundColor !== '#ffffff') {
+      this.legendElement.style.backgroundColor = this.config.backgroundColor;
+    }
+    if (this.config.borderColor !== '#e5e7eb') {
+      this.legendElement.style.borderColor = this.config.borderColor;
+    }
+    if (this.config.textColor !== '#374151') {
+      this.legendElement.style.color = this.config.textColor;
     }
 
-    // Add label text with better truncation handling
-    this.legendGroup
-      .append('text')
-      .attr('x', textX)
-      .attr('y', centerY + 3)
-      .attr('font-family', 'Inter, sans-serif')
-      .attr('font-size', '11px') // Slightly smaller for better fit
-      .attr('font-weight', '500')
-      .attr('fill', this.config.textColor)
-      .text(item.label);
+    // Apply padding
+    const paddingClass = this.getPaddingClass();
+    baseClasses.push(paddingClass);
 
-    // Add symbol text with better positioning
-    this.legendGroup
-      .append('text')
-      .attr('x', symbolX)
-      .attr('y', centerY + 3)
-      .attr('text-anchor', 'end')
-      .attr('font-family', 'JetBrains Mono, Monaco, monospace')
-      .attr('font-size', '9px') // Smaller for compact display
-      .attr('fill', '#9ca3af')
-      .text(item.symbol);
-  }
+    // Apply positioning classes
+    const positionClasses = this.getPositionClasses();
+    baseClasses.push(...positionClasses);
 
-  private drawCardinalityMarker(x: number, y: number, type: string): void {
-    const markerDefs = MarkerDefinitions.getInstance();
-    markerDefs.drawCardinalityInline(this.legendGroup, x, y, type);
-  }
-
-  private drawRelationshipLine(x: number, y: number, type: string): void {
-    const lineLength = 24; // Increased from default
-    const strokeWidth = 2; // Increased thickness
-
-    if (type === 'solid-line') {
-      // Solid line
-      this.legendGroup
-        .append('line')
-        .attr('x1', x)
-        .attr('y1', y)
-        .attr('x2', x + lineLength)
-        .attr('y2', y)
-        .attr('stroke', '#6b7280')
-        .attr('stroke-width', strokeWidth);
-    } else if (type === 'dashed-line') {
-      // Dotted line
-      this.legendGroup
-        .append('line')
-        .attr('x1', x)
-        .attr('y1', y)
-        .attr('x2', x + lineLength)
-        .attr('y2', y)
-        .attr('stroke', '#6b7280')
-        .attr('stroke-width', strokeWidth)
-        .attr('stroke-dasharray', '4,3'); // Slightly larger dashes for visibility
-    }
-  }
-
-  private positionLegend(width: number, height: number): void {
-    const svgNode = this.svg.node();
-    if (!svgNode) return;
-
-    // Use viewBox or fallback to reasonable defaults
-    const viewBox = this.svg.attr('viewBox');
-    let svgWidth = 800;
-    let svgHeight = 600;
-
-    if (viewBox) {
-      const [, , w, h] = viewBox.split(' ').map(Number);
-      svgWidth = w;
-      svgHeight = h;
-    } else {
-      // Try to get actual dimensions
-      const svgRect = svgNode.getBoundingClientRect();
-      if (svgRect.width > 0) svgWidth = svgRect.width;
-      if (svgRect.height > 0) svgHeight = svgRect.height;
+    // Apply responsive classes
+    if (this.config.responsive) {
+      const responsiveClasses = this.getResponsiveClasses();
+      baseClasses.push(...responsiveClasses);
     }
 
-    const margin = 16;
-    let x: number, y: number;
+    this.legendElement.className =
+      `erd-legend ${this.config.className} ${baseClasses.join(' ')}`.trim();
+  }
 
+  private getPaddingClass(): string {
+    const padding = this.config.padding;
+    if (padding <= 8) return 'p-2';
+    if (padding <= 12) return 'p-3';
+    if (padding <= 16) return 'p-4';
+    if (padding <= 20) return 'p-5';
+    return 'p-6';
+  }
+
+  private getPositionClasses(): string[] {
     switch (this.config.position) {
       case 'top-left':
-        x = margin;
-        y = margin;
-        break;
+        return [
+          'top-2',
+          'left-2',
+          'sm:top-3',
+          'sm:left-3',
+          'md:top-4',
+          'md:left-4',
+          'lg:top-6',
+          'lg:left-6',
+        ];
       case 'top-right':
-        x = svgWidth - width - margin;
-        y = margin;
-        break;
+        return [
+          'top-2',
+          'right-2',
+          'sm:top-3',
+          'sm:right-3',
+          'md:top-4',
+          'md:right-4',
+          'lg:top-6',
+          'lg:right-6',
+        ];
       case 'bottom-left':
-        x = margin;
-        y = svgHeight - height - margin;
-        break;
+        return [
+          'bottom-2',
+          'left-2',
+          'sm:bottom-3',
+          'sm:left-3',
+          'md:bottom-4',
+          'md:left-4',
+          'lg:bottom-6',
+          'lg:left-6',
+        ];
       case 'bottom-right':
+        return [
+          'bottom-2',
+          'right-2',
+          'sm:bottom-3',
+          'sm:right-3',
+          'md:bottom-4',
+          'md:right-4',
+          'lg:bottom-6',
+          'lg:right-6',
+        ];
+      case 'center':
+        return ['top-1/2', 'left-1/2', 'transform', '-translate-x-1/2', '-translate-y-1/2'];
       default:
-        x = svgWidth - width - margin;
-        y = svgHeight - height - margin;
-        break;
+        return [
+          'bottom-2',
+          'right-2',
+          'sm:bottom-3',
+          'sm:right-3',
+          'md:bottom-4',
+          'md:right-4',
+          'lg:bottom-6',
+          'lg:right-6',
+        ];
     }
+  }
 
-    // Ensure legend stays within bounds
-    x = Math.max(margin, Math.min(x, svgWidth - width - margin));
-    y = Math.max(margin, Math.min(y, svgHeight - height - margin));
+  private getResponsiveClasses(): string[] {
+    return [
+      // Mobile adjustments
+      'sm:text-sm',
+      'sm:min-w-72',
+      'sm:max-w-80',
+      'sm:p-4',
+      // Tablet adjustments
+      'md:text-base',
+      'md:min-w-80',
+      'md:max-w-96',
+      'md:p-5',
+      // Very small screens - full width at bottom with proper gaps
+      'max-sm:fixed',
+      'max-sm:bottom-2',
+      'max-sm:left-2',
+      'max-sm:right-2',
+      'max-sm:max-w-none',
+      'max-sm:transform-none',
+      'max-sm:translate-x-0',
+      'max-sm:translate-y-0',
+      // Ensure gaps are maintained on very small screens
+      'max-sm:!bottom-2',
+      'max-sm:!left-2',
+      'max-sm:!right-2',
+    ];
+  }
 
-    this.legendGroup.attr('transform', `translate(${x}, ${y})`);
+  private renderContent(): void {
+    const cardinalityItems: LegendItem[] = [
+      { label: '0 or 1', type: 'zero-or-one', symbol: 'o|', category: 'cardinality' },
+      { label: 'Exactly 1', type: 'one', symbol: '||', category: 'cardinality' },
+      { label: '0 or many', type: 'zero-or-more', symbol: 'o{', category: 'cardinality' },
+      { label: '1 or many', type: 'one-or-more', symbol: '}|', category: 'cardinality' },
+    ];
+
+    const relationshipItems: LegendItem[] = [
+      { label: 'Identifying', type: 'solid-line', symbol: '——', category: 'relationship' },
+      { label: 'Non-identifying', type: 'dashed-line', symbol: '••', category: 'relationship' },
+    ];
+
+    this.legendElement.innerHTML = `
+      <div class="legend-title font-semibold text-sm mb-3 text-center">ERD Notation</div>
+      
+      <div class="legend-columns flex gap-4 justify-between max-sm:flex-col max-sm:gap-3">
+        <div class="legend-column flex-1 min-w-32">
+          <div class="legend-section-header font-semibold text-xs text-blue-700 mb-2 px-2 py-1 bg-blue-50 rounded border border-blue-200">
+            CARDINALITY
+          </div>
+          ${cardinalityItems.map(item => this.renderLegendItem(item)).join('')}
+        </div>
+        
+        <div class="legend-column flex-1 min-w-32">
+          <div class="legend-section-header font-semibold text-xs text-green-700 mb-2 px-2 py-1 bg-green-50 rounded border border-green-200">
+            RELATIONSHIP
+          </div>
+          ${relationshipItems.map(item => this.renderLegendItem(item)).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  private renderLegendItem(item: LegendItem): string {
+    const iconHtml =
+      item.category === 'cardinality'
+        ? this.renderCardinalityIcon(item.type)
+        : this.renderRelationshipIcon(item.type);
+
+    return `
+      <div class="legend-item flex items-center mb-2 gap-2 max-sm:mb-1 max-sm:gap-1">
+        <div class="legend-icon w-6 h-4 flex items-center justify-center">
+          ${iconHtml}
+        </div>
+        <span class="legend-label flex-1 font-medium text-xs">${item.label}</span>
+        <span class="legend-symbol font-mono text-xs text-gray-400">${item.symbol}</span>
+      </div>
+    `;
+  }
+
+  private renderCardinalityIcon(type: string): string {
+    // Generate cardinality icons using MarkerDefinitions for consistency with main ERD rendering
+    // Create a temporary container div to render the SVG icon
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.visibility = 'hidden';
+    document.body.appendChild(tempContainer);
+
+    try {
+      // Create a temporary SVG using D3
+      const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      tempSvg.setAttribute('width', '24');
+      tempSvg.setAttribute('height', '16');
+      tempSvg.setAttribute('viewBox', '0 0 24 16');
+      tempContainer.appendChild(tempSvg);
+
+      // Use D3 to select and create group
+      const svgSelection = select(tempSvg);
+      const group = svgSelection.append('g');
+
+      // Use MarkerDefinitions to draw the cardinality marker
+      const markerDefs = MarkerDefinitions.getInstance();
+      markerDefs.drawCardinalityInline(group, 12, 8, type);
+
+      // Return the SVG HTML
+      return tempSvg.outerHTML;
+    } finally {
+      // Clean up
+      document.body.removeChild(tempContainer);
+    }
+  }
+
+  private renderRelationshipIcon(type: string): string {
+    const color = '#6b7280';
+    const strokeWidth = '2';
+
+    if (type === 'solid-line') {
+      return `
+        <svg width="20" height="12" viewBox="0 0 20 12">
+          <line x1="2" y1="6" x2="18" y2="6" stroke="${color}" stroke-width="${strokeWidth}"/>
+        </svg>
+      `;
+    } else if (type === 'dashed-line') {
+      return `
+        <svg width="20" height="12" viewBox="0 0 20 12">
+          <line x1="2" y1="6" x2="18" y2="6" stroke="${color}" stroke-width="${strokeWidth}" stroke-dasharray="3,2"/>
+        </svg>
+      `;
+    }
+    return '';
   }
 
   public setVisible(visible: boolean): void {
@@ -320,15 +336,22 @@ export class LegendComponent {
   public setPosition(position: LegendConfig['position']): void {
     if (position) {
       this.config.position = position;
-      this.render();
+      this.applyPosition();
     }
   }
 
   public destroy(): void {
-    this.legendGroup.remove();
+    if (this.legendElement && this.legendElement.parentNode) {
+      this.legendElement.parentNode.removeChild(this.legendElement);
+    }
   }
 
   public toggle(): void {
     this.setVisible(!this.config.show);
+  }
+
+  public updateResponsiveConfig(config: Partial<LegendConfig>): void {
+    Object.assign(this.config, config);
+    this.render();
   }
 }
