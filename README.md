@@ -21,20 +21,6 @@ Run the dev server:
 npm run dev
 ```
 
-## Deployment
-
-Build for production:
-
-```sh
-npm run build
-```
-
-Run in production:
-
-```sh
-npm start
-```
-
 ## Tech Stack
 
 - **Frontend**: React, Remix, TypeScript
