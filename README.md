@@ -18,6 +18,7 @@ A powerful web application for visualizing Entity Relationship Diagrams from Mer
 Run the dev server:
 
 ```sh
+npm install
 npm run dev
 ```
 
