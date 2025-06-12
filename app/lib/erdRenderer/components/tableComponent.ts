@@ -76,7 +76,7 @@ export class TableComponent {
       .style('box-sizing', 'border-box');
 
     // Handle both click and drag on the HTML div to avoid conflicts
-    tableDiv.on('mousedown', (event) => {
+    tableDiv.on('mousedown', event => {
       this.mouseDownPos = { x: event.clientX, y: event.clientY };
       this.dragStartPos = { ...this.model.position };
       this.hasMoved = false;
@@ -90,7 +90,7 @@ export class TableComponent {
       document.addEventListener('mouseup', this.handleMouseUp);
     });
 
-    tableDiv.on('click', (event) => {
+    tableDiv.on('click', event => {
       // Only handle click if we haven't moved (not a drag)
       if (!this.hasMoved) {
         console.log('Table div clicked:', this.model.id);
@@ -101,7 +101,7 @@ export class TableComponent {
     });
 
     // Create table header
-    const headerDiv = tableDiv
+    tableDiv
       .append('xhtml:div')
       .style('background-color', this.model.isSelected ? '#3b82f6' : '#f3f4f6')
       .style('color', this.model.isSelected ? '#ffffff' : '#1f2937')
@@ -166,7 +166,7 @@ export class TableComponent {
       }
 
       // Field name
-      const fieldNameDiv = fieldDiv
+      fieldDiv
         .append('xhtml:div')
         .style('flex', '1')
         .style('font-weight', field.isPrimaryKey ? '600' : '400')
@@ -178,7 +178,7 @@ export class TableComponent {
         .text(field.name);
 
       // Field type
-      const fieldTypeDiv = fieldDiv
+      fieldDiv
         .append('xhtml:div')
         .style('color', '#6b7280')
         .style('font-size', '11px')
@@ -276,7 +276,9 @@ export class TableComponent {
     this.dragStartPos = null;
 
     // Reset hasMoved after a short delay to allow click event to process
-    setTimeout(() => { this.hasMoved = false; }, 10);
+    setTimeout(() => {
+      this.hasMoved = false;
+    }, 10);
 
     // Always remove global listeners when mouse is released
     document.removeEventListener('mousemove', this.handleMouseMove);

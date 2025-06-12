@@ -1,14 +1,8 @@
 interface HeaderProps {
-  selectedTable: string | null;
-  selectedRelationship: string | null;
   onToggleSidebar: () => void;
 }
 
-export default function Header({
-  selectedTable,
-  selectedRelationship,
-  onToggleSidebar,
-}: HeaderProps) {
+export default function Header({ onToggleSidebar }: HeaderProps) {
   return (
     <header className="bg-white border-b border-secondary-200 responsive-padding relative z-30 flex-shrink-0">
       <div className="flex items-center justify-between">
