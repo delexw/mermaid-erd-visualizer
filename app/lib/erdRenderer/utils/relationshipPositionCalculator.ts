@@ -86,7 +86,6 @@ export class RelationshipPositionCalculator implements IRelationshipPositionCalc
     relationships.forEach((rel, index) => {
       if (relationships.length === 1) {
         // Single relationship - no offset needed
-        console.log(`[ERDRenderer] Updating ${rel.id} (single):`, { baseFromPos, baseToPos });
         rel.component.updatePositions(baseFromPos, baseToPos);
       } else {
         // Multiple relationships - apply offset
@@ -101,10 +100,6 @@ export class RelationshipPositionCalculator implements IRelationshipPositionCalc
           offset
         );
 
-        console.log(`[ERDRenderer] Updating ${rel.id} (${index + 1}/${relationships.length}):`, {
-          adjustedFromPos,
-          adjustedToPos,
-        });
         rel.component.updatePositions(adjustedFromPos, adjustedToPos);
       }
     });

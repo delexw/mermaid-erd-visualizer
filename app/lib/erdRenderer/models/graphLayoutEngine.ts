@@ -42,23 +42,15 @@ export class GraphLayoutEngine {
     tables: Table[],
     relationships: Relationship[]
   ): Promise<Position[]> {
-    console.log('GraphLayoutEngine: Starting layout calculation', {
-      tableCount: tables.length,
-      relationshipCount: relationships.length,
-    });
-
     // Convert data to ELK format
     const elkGraph = this.convertToELKFormat(tables, relationships);
-    console.log('GraphLayoutEngine: Created ELK graph', elkGraph);
 
     try {
       // Calculate layout using ELK
       const layoutedGraph = await this.elk.layout(elkGraph);
-      console.log('GraphLayoutEngine: ELK layout completed', layoutedGraph);
 
       // Extract positions from layouted graph
       const positions = this.extractPositions(tables, layoutedGraph);
-      console.log('GraphLayoutEngine: Extracted positions', positions);
 
       return positions;
     } catch (error) {

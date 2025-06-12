@@ -162,11 +162,6 @@ export class ERDRenderer {
   public async loadData(tables: Table[], relationships: Relationship[]): Promise<void> {
     this.clear();
 
-    // Debug logging
-    console.log(
-      `[ERDRenderer] Loading data: ${tables.length} tables, ${relationships.length} relationships`
-    );
-
     // Use GraphLayoutEngine to calculate optimal positions
     const positions = await this.layoutEngine.calculateLayout(tables, relationships);
 
@@ -183,31 +178,14 @@ export class ERDRenderer {
 
       this.tableComponents.set(table.id, component);
     });
-
-    console.log(`[ERDRenderer] Created ${this.tableModels.size} table models`);
-
     // Create relationship models and components
     relationships.forEach(relationship => {
-      console.log(
-        `[ERDRenderer] Processing relationship:`,
-        relationship.id,
-        relationship.description
-      );
       const model = new RelationshipModel(relationship);
       this.relationshipModels.set(relationship.id, model);
 
       const component = new RelationshipComponent(this.mainGroup, model);
       this.relationshipComponents.set(relationship.id, component);
-      console.log(`[ERDRenderer] Created component for:`, relationship.id);
     });
-
-    console.log(
-      `[ERDRenderer] Created ${this.relationshipComponents.size} relationship components`
-    );
-    console.log(
-      `[ERDRenderer] Relationship IDs in map:`,
-      Array.from(this.relationshipComponents.keys())
-    );
 
     // Wait for next frame to ensure table components are fully rendered
     await new Promise(resolve => requestAnimationFrame(resolve));
@@ -244,10 +222,6 @@ export class ERDRenderer {
   }
 
   private updateRelationshipPositions(): void {
-    console.log(
-      `[ERDRenderer] Updating relationship positions for ${this.relationshipComponents.size} relationships`
-    );
-
     const positionCalculator = new RelationshipPositionCalculator(this.tableModels);
     const relationshipGrouper = new RelationshipGrouper(this.relationshipComponents);
 
@@ -464,9 +438,6 @@ export class ERDRenderer {
   }
 
   public selectTable(tableId: string | null): void {
-    console.log(`[ERDRenderer] selectTable called with:`, tableId);
-    console.log(`[ERDRenderer] Available table IDs:`, Array.from(this.tableModels.keys()));
-
     if (tableId === null) {
       // Clear selection
       this.selectedTables.clear();
@@ -476,14 +447,10 @@ export class ERDRenderer {
       this.selectedTables.add(tableId);
     }
 
-    console.log(`[ERDRenderer] Selected tables after update:`, Array.from(this.selectedTables));
     this.updateVisibility();
   }
 
   public toggleTable(tableId: string): void {
-    console.log(`[ERDRenderer] toggleTable called with:`, tableId);
-    console.log(`[ERDRenderer] Available table IDs:`, Array.from(this.tableModels.keys()));
-
     if (this.selectedTables.has(tableId)) {
       // Deselect if already selected
       this.selectedTables.delete(tableId);
@@ -492,17 +459,10 @@ export class ERDRenderer {
       this.selectedTables.clear();
       this.selectedTables.add(tableId);
     }
-
-    console.log(`[ERDRenderer] Selected tables after update:`, Array.from(this.selectedTables));
     this.updateVisibility();
   }
 
   private updateVisibility(): void {
-    console.log(
-      `[ERDRenderer] updateVisibility called, selectedTables:`,
-      Array.from(this.selectedTables)
-    );
-
     if (this.selectedTables.size === 0) {
       // Show all tables and relationships
       this.tableModels.forEach(model => {

@@ -112,9 +112,6 @@ export class MermaidERDParser implements IDiagramParser {
             return;
           }
           tables.push(table);
-          console.log(
-            `[Parser] Successfully parsed table: ${table.name} with ${table.fields.length} fields`
-          );
         } else {
           warningCollector.addWarning(
             block.lineNumber,
@@ -295,7 +292,6 @@ export class MermaidERDParser implements IDiagramParser {
               return;
             }
             relationships.push(relationship);
-            console.log(`[Parser] Successfully parsed relationship: ${relationship.id}`);
           } else {
             warningCollector.addWarning(lineNumber, 'Failed to parse relationship', trimmedLine);
           }
