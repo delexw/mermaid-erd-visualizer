@@ -10,6 +10,11 @@ export class TableComponent {
   private onTableDrag?: (tableId: string, position: Position) => void;
   private onTableDragEnd?: (tableId: string) => void;
 
+  // Drag state
+  private mouseDownPos: { x: number; y: number } | null = null;
+  private dragStartPos: Position | null = null;
+  private hasMoved = false;
+
   constructor(
     parentSvg: Selection<SVGGElement, unknown, null, undefined>,
     model: TableModel,
@@ -33,84 +38,108 @@ export class TableComponent {
       .attr('data-table-id', model.id);
 
     this.render();
-    this.setupInteractions();
+    this.setupDragInteractions();
   }
 
   private render(): void {
-    const bounds = this.model.getBounds();
-
     // Clear existing content
     this.svgGroup.selectAll('*').remove();
+
+    const bounds = this.model.getBounds();
 
     // Position the group
     this.svgGroup.attr('transform', `translate(${bounds.x}, ${bounds.y})`);
 
-    // Create table background
-    this.svgGroup
-      .append('rect')
-      .attr('class', 'table-bg')
-      .attr('width', bounds.width)
-      .attr('height', bounds.height)
-      .attr('rx', 8)
-      .attr('fill', this.model.isSelected ? '#dbeafe' : '#ffffff')
-      .attr('stroke', this.model.isSelected ? '#3b82f6' : '#d1d5db')
-      .attr('stroke-width', this.model.isSelected ? 2 : 1)
-      .attr('filter', this.model.isDragging ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' : 'none');
-
-    // Create header background
-    this.svgGroup
-      .append('rect')
-      .attr('class', 'table-header')
-      .attr('width', bounds.width)
-      .attr('height', 40)
-      .attr('rx', 8)
-      .attr('fill', this.model.isSelected ? '#3b82f6' : '#f3f4f6')
-      .attr('stroke', 'none');
-
-    // Add table name
-    this.svgGroup
-      .append('text')
-      .attr('class', 'table-name')
-      .attr('x', bounds.width / 2)
-      .attr('y', 25)
-      .attr('text-anchor', 'middle')
-      .attr('font-family', 'Inter, sans-serif')
-      .attr('font-size', '14px')
-      .attr('font-weight', '600')
-      .attr('fill', this.model.isSelected ? '#ffffff' : '#1f2937')
-      .text(this.model.name);
-
-    // Add fields using HTML foreign object for better text alignment
-    const fieldsContainer = this.svgGroup
+    // Create a single foreignObject that contains the entire table as HTML
+    const foreignObject = this.svgGroup
       .append('foreignObject')
       .attr('x', 0)
-      .attr('y', 40)
+      .attr('y', 0)
       .attr('width', bounds.width)
-      .attr('height', this.model.fields.length * 24);
+      .attr('height', bounds.height);
 
-    const fieldsDiv = fieldsContainer
+    // Create the main table container div
+    const tableDiv = foreignObject
       .append('xhtml:div')
       .style('width', '100%')
       .style('height', '100%')
-      .style('font-family', 'Inter, sans-serif');
+      .style('font-family', 'Inter, sans-serif')
+      .style('cursor', 'pointer')
+      .style('user-select', 'none')
+      .style('background-color', this.model.isSelected ? '#dbeafe' : '#ffffff')
+      .style('border', this.model.isSelected ? '2px solid #3b82f6' : '1px solid #d1d5db')
+      .style('border-radius', '8px')
+      .style('box-shadow', '0 1px 3px 0 rgba(0, 0, 0, 0.1)')
+      .style('overflow', 'hidden')
+      .style('display', 'flex')
+      .style('flex-direction', 'column')
+      .style('box-sizing', 'border-box');
 
+    // Handle both click and drag on the HTML div to avoid conflicts
+    tableDiv.on('mousedown', (event) => {
+      this.mouseDownPos = { x: event.clientX, y: event.clientY };
+      this.dragStartPos = { ...this.model.position };
+      this.hasMoved = false;
+      // Don't set model.isDragging = true here - only when we actually start dragging
+
+      event.preventDefault(); // Prevent text selection
+      event.stopPropagation(); // Prevent SVG container from receiving the event
+
+      // Attach global listeners for potential drag operation
+      document.addEventListener('mousemove', this.handleMouseMove);
+      document.addEventListener('mouseup', this.handleMouseUp);
+    });
+
+    tableDiv.on('click', (event) => {
+      // Only handle click if we haven't moved (not a drag)
+      if (!this.hasMoved) {
+        console.log('Table div clicked:', this.model.id);
+        event.preventDefault();
+        event.stopPropagation(); // Prevent SVG container from receiving the event
+        this.onTableClick?.(this.model.id);
+      }
+    });
+
+    // Create table header
+    const headerDiv = tableDiv
+      .append('xhtml:div')
+      .style('background-color', this.model.isSelected ? '#3b82f6' : '#f3f4f6')
+      .style('color', this.model.isSelected ? '#ffffff' : '#1f2937')
+      .style('padding', '12px 16px')
+      .style('font-weight', '600')
+      .style('font-size', '14px')
+      .style('border-bottom', '1px solid #e5e7eb')
+      .style('flex-shrink', '0')
+      .text(this.model.name);
+
+    // Create fields container
+    const fieldsContainer = tableDiv
+      .append('xhtml:div')
+      .style('flex', '1')
+      .style('overflow', 'hidden')
+      .style('display', 'flex')
+      .style('flex-direction', 'column');
+
+    // Add each field as a div row
     this.model.fields.forEach((field, index) => {
-      const fieldRow = fieldsDiv
+      const fieldDiv = fieldsContainer
         .append('xhtml:div')
+        .style('padding', '8px 16px')
+        .style('border-bottom', index < this.model.fields.length - 1 ? '1px solid #f3f4f6' : 'none')
         .style('display', 'flex')
         .style('align-items', 'center')
-        .style('gap', '8px')
-        .style('height', '24px')
-        .style('padding', '0 8px')
-        .style('background-color', index % 2 === 1 ? '#f9fafb' : 'transparent');
+        .style('font-size', '12px')
+        .style('background-color', index % 2 === 1 ? '#f9fafb' : 'transparent')
+        .style('min-height', '24px')
+        .style('gap', '8px');
 
-      // Icons container with fixed width same as icon width
-      const iconsContainer = fieldRow
+      // Icons container with fixed width
+      const iconsContainer = fieldDiv
         .append('xhtml:div')
         .style('display', 'flex')
         .style('align-items', 'center')
         .style('gap', '4px')
-        .style('width', '8px') // Fixed width same as icon size
+        .style('width', '16px')
         .style('flex-shrink', '0');
 
       // Primary key indicator
@@ -137,79 +166,30 @@ export class TableComponent {
       }
 
       // Field name
-      fieldRow
+      const fieldNameDiv = fieldDiv
         .append('xhtml:div')
         .style('flex', '1')
-        .style('font-size', '12px')
         .style('font-weight', field.isPrimaryKey ? '600' : '400')
         .style('color', '#374151')
-        .style('min-width', '0') // Allow text to shrink
+        .style('min-width', '0')
         .style('white-space', 'nowrap')
         .style('overflow', 'hidden')
         .style('text-overflow', 'ellipsis')
         .text(field.name);
 
       // Field type
-      fieldRow
+      const fieldTypeDiv = fieldDiv
         .append('xhtml:div')
-        .style('font-size', '11px')
         .style('color', '#6b7280')
+        .style('font-size', '11px')
         .style('flex-shrink', '0')
         .text(field.type);
     });
   }
 
-  private setupInteractions(): void {
-    // Make the entire table clickable and draggable
-    this.svgGroup.style('cursor', 'pointer').on('click', event => {
-      event.stopPropagation();
-      this.onTableClick?.(this.model.id);
-    });
-
-    // Add drag behavior
-    let dragStartPos: Position | null = null;
-    let initialMousePos: Position | null = null;
-
-    this.svgGroup.on('mousedown', event => {
-      event.preventDefault();
-      dragStartPos = { ...this.model.position };
-      initialMousePos = { x: event.clientX, y: event.clientY };
-      this.model.setDragging(true);
-      this.onTableDragStart?.(this.model.id, this.model.position);
-      this.update(); // Re-render with dragging state
-    });
-
-    // Global mouse events for dragging
-    if (typeof window !== 'undefined') {
-      const handleMouseMove = (event: MouseEvent) => {
-        if (dragStartPos && initialMousePos && this.model.isDragging) {
-          const deltaX = event.clientX - initialMousePos.x;
-          const deltaY = event.clientY - initialMousePos.y;
-
-          const newPosition: Position = {
-            x: dragStartPos.x + deltaX,
-            y: dragStartPos.y + deltaY,
-          };
-
-          this.model.setPosition(newPosition);
-          this.onTableDrag?.(this.model.id, newPosition);
-          this.update();
-        }
-      };
-
-      const handleMouseUp = () => {
-        if (this.model.isDragging) {
-          this.model.setDragging(false);
-          this.onTableDragEnd?.(this.model.id);
-          this.update();
-          dragStartPos = null;
-          initialMousePos = null;
-        }
-      };
-
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
+  private setupDragInteractions(): void {
+    // Drag interactions are now handled directly in the render method on the HTML div
+    // This avoids conflicts between SVG and HTML event handling
   }
 
   public update(): void {
@@ -217,10 +197,89 @@ export class TableComponent {
   }
 
   public destroy(): void {
+    // Clean up any active drag state and listeners
+    if (this.mouseDownPos) {
+      document.removeEventListener('mousemove', this.handleMouseMove);
+      document.removeEventListener('mouseup', this.handleMouseUp);
+    }
+
+    // Reset all state
+    this.model.setDragging(false);
+    this.mouseDownPos = null;
+    this.dragStartPos = null;
+    this.hasMoved = false;
+
     this.svgGroup.remove();
   }
 
   public getModel(): TableModel {
     return this.model;
   }
+
+  private handleMouseMove = (event: MouseEvent): void => {
+    // Only proceed if we have valid mouse down state
+    if (!this.mouseDownPos || !this.dragStartPos) {
+      return;
+    }
+
+    const deltaX = event.clientX - this.mouseDownPos.x;
+    const deltaY = event.clientY - this.mouseDownPos.y;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    // Only start dragging if we've moved more than 5 pixels
+    if (distance > 5) {
+      this.hasMoved = true;
+
+      // Start dragging if not already (this is where we actually start dragging)
+      if (!this.model.isDragging) {
+        this.model.setDragging(true);
+        this.onTableDragStart?.(this.model.id, this.model.position);
+      }
+
+      // Get the current zoom transform to adjust coordinates
+      const svg = this.svgGroup.node()?.ownerSVGElement;
+      let scale = 1;
+      if (svg) {
+        const transform = svg.getAttribute('transform') || '';
+        const scaleMatch = transform.match(/scale\(([^)]+)\)/);
+        if (scaleMatch) {
+          scale = parseFloat(scaleMatch[1]);
+        }
+      }
+
+      const scaledDeltaX = deltaX / scale;
+      const scaledDeltaY = deltaY / scale;
+
+      const newPosition: Position = {
+        x: this.dragStartPos.x + scaledDeltaX,
+        y: this.dragStartPos.y + scaledDeltaY,
+      };
+
+      this.model.setPosition(newPosition);
+      this.onTableDrag?.(this.model.id, newPosition);
+      this.update();
+    }
+  };
+
+  private handleMouseUp = (event: MouseEvent): void => {
+    console.log('Mouse up:', event);
+    console.log('Model position:', this.model.position);
+    // Only call drag end if we were actually dragging
+    if (this.model.isDragging) {
+      this.model.setDragging(false);
+      this.onTableDragEnd?.(this.model.id);
+      this.update();
+    }
+
+    // Reset all drag state
+    this.mouseDownPos = null;
+    this.dragStartPos = null;
+
+    // Reset hasMoved after a short delay to allow click event to process
+    setTimeout(() => { this.hasMoved = false; }, 10);
+
+    // Always remove global listeners when mouse is released
+    document.removeEventListener('mousemove', this.handleMouseMove);
+    document.removeEventListener('mouseup', this.handleMouseUp);
+  };
 }
