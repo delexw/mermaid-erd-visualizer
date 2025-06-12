@@ -2,9 +2,7 @@
 
 A powerful web application for visualizing Entity Relationship Diagrams from Mermaid syntax, optimized for **large and complex ERD diagrams**.
 
-## 📸 Demo
-
-![Mermaid ERD Visualizer Screenshot](docs/images/demo-screenshot.png)
+![Mermaid ERD Visualizer Screenshot](docs/images/image.png)
 
 *Interactive ERD visualization showing database schema with tables, relationships, and an intuitive sidebar for navigation.*
 
