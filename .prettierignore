@@ -1,0 +1,28 @@
+# Build artifacts
+build/
+dist/
+.cache/
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+*.min.js
+*.min.css
+
+# Data files (large text files)
+app/data/mermaid_diagram.txt
+app/data/erd-data.ts
+app/data/additional-tables.ts
+
+# Config files that should maintain specific formatting
+.env* 
