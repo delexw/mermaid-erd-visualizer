@@ -1,4 +1,3 @@
-import { erdData } from "~/data/erd-data";
 
 interface HeaderProps {
   selectedTable: string | null;
@@ -51,14 +50,6 @@ export default function Header({
                   <span className="text-primary-700 break-all text-sm">{selectedTable}</span>
                   <span className="text-primary-600 text-xs">(click again to deselect)</span>
                 </div>
-                {(() => {
-                  const table = erdData.tables.find(t => t.id === selectedTable);
-                  return table ? (
-                    <div className="text-primary-600 text-xs mt-1">
-                      {table.fields.length} fields
-                    </div>
-                  ) : null;
-                })()}
               </div>
             </div>
           )}
@@ -72,14 +63,6 @@ export default function Header({
                 <div className="flex flex-wrap items-center gap-1">
                   <span className="font-medium text-primary-800 text-sm">Selected Relationship:</span>
                 </div>
-                {(() => {
-                  const rel = erdData.relationships.find(r => r.id === selectedRelationship);
-                  return rel ? (
-                    <div className="text-primary-700 text-xs mt-1 break-all">
-                      {rel.fromTable} → {rel.toTable} ({rel.type})
-                    </div>
-                  ) : null;
-                })()}
               </div>
             </div>
           )}
