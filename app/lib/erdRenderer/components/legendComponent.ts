@@ -336,7 +336,7 @@ export class LegendComponent {
   public setPosition(position: LegendConfig['position']): void {
     if (position) {
       this.config.position = position;
-      this.applyPosition();
+      this.render();
     }
   }
 

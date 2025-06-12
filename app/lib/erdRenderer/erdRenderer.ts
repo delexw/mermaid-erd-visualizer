@@ -64,7 +64,7 @@ export class ERDRenderer {
   private instanceId: string;
 
   constructor(config: ERDRendererConfig) {
-    this.instanceId = `ERDRenderer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.instanceId = `ERDRenderer-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     this.config = config;
     this.layoutEngine = new GraphLayoutEngine(config.layoutConfig);
     this.initializeSVG();
