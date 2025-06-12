@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 import { useERD } from '~/contexts/ERDContext';
 
@@ -11,6 +11,8 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+type Tab = 'tables' | 'relationships' | 'warnings';
+
 export default function Sidebar({
   selectedTable,
   selectedRelationship,
@@ -20,22 +22,57 @@ export default function Sidebar({
   onClose,
 }: SidebarProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'tables' | 'relationships' | 'warnings'>('tables');
+  const [activeTab, setActiveTab] = useState<Tab>('tables');
+
+  // Refs for scrolling to selected table
+  const tableRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const tablesContainerRef = useRef<HTMLDivElement>(null);
 
   const { tables, relationships, warnings } = useERD();
 
-  const filteredTables = tables.filter(
-    table =>
-      table.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      table.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setSearchTerm('');
+  };
 
-  const filteredRelationships = relationships.filter(
-    rel =>
-      rel.fromTable.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rel.toTable.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rel.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Scroll to selected table when selection changes
+  useEffect(() => {
+    if (selectedTable && isOpen && activeTab === 'tables') {
+      const tableElement = tableRefs.current.get(selectedTable);
+      if (tableElement && tablesContainerRef.current) {
+        // Use requestAnimationFrame to ensure the element is rendered
+        requestAnimationFrame(() => {
+          tableElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest',
+          });
+        });
+      }
+    }
+  }, [selectedTable, isOpen, activeTab]);
+
+  // Clear refs when tables change
+  useEffect(() => {
+    tableRefs.current.clear();
+  }, [tables]);
+
+  const filteredTables = tables
+    .filter(
+      table =>
+        table.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        table.id.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const filteredRelationships = relationships
+    .filter(
+      rel =>
+        rel.fromTable.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        rel.toTable.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        rel.type.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.fromTable.localeCompare(b.fromTable));
 
   const filteredWarnings = warnings.filter(warning =>
     warning.message.toLowerCase().includes(searchTerm.toLowerCase())
@@ -121,7 +158,7 @@ export default function Sidebar({
           {/* Tabs */}
           <div className="flex mt-4 bg-secondary-100 rounded-lg p-1">
             <button
-              onClick={() => setActiveTab('tables')}
+              onClick={() => handleTabChange('tables')}
               className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors ${
                 activeTab === 'tables'
                   ? 'bg-white text-primary-700 shadow-sm'
@@ -131,7 +168,7 @@ export default function Sidebar({
               Tables ({filteredTables.length})
             </button>
             <button
-              onClick={() => setActiveTab('relationships')}
+              onClick={() => handleTabChange('relationships')}
               className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors ${
                 activeTab === 'relationships'
                   ? 'bg-white text-primary-700 shadow-sm'
@@ -141,7 +178,7 @@ export default function Sidebar({
               Relations ({filteredRelationships.length})
             </button>
             <button
-              onClick={() => setActiveTab('warnings')}
+              onClick={() => handleTabChange('warnings')}
               className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors relative ${
                 activeTab === 'warnings'
                   ? 'bg-white text-red-700 shadow-sm'
@@ -161,18 +198,25 @@ export default function Sidebar({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto" ref={tablesContainerRef}>
           {activeTab === 'tables' && (
             <div className="p-4 space-y-2">
               {filteredTables.map(table => {
                 const isSelected = selectedTable === table.id;
-                const tableRelationships = relationships.filter(
-                  rel => rel.fromTable === table.name || rel.toTable === table.name
-                );
+                const tableRelationships = relationships
+                  .filter(rel => rel.fromTable === table.name || rel.toTable === table.name)
+                  .sort((a, b) => a.toTable.localeCompare(b.toTable));
 
                 return (
                   <div key={table.id}>
                     <button
+                      ref={el => {
+                        if (el) {
+                          tableRefs.current.set(table.id, el);
+                        } else {
+                          tableRefs.current.delete(table.id);
+                        }
+                      }}
                       onClick={() => handleTableClick(table.id)}
                       className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${
                         isSelected
@@ -180,7 +224,7 @@ export default function Sidebar({
                           : 'bg-white border-secondary-200 hover:bg-secondary-50 hover:border-secondary-300'
                       }`}
                     >
-                      <div className="font-medium text-sm">{table.name}</div>
+                      <div className="font-medium text-sm break-words">{table.name}</div>
                       <div className="text-xs text-secondary-500 mt-1">
                         {table.fields.length} fields
                         {tableRelationships.length > 0 && (
@@ -349,10 +393,12 @@ export default function Sidebar({
                         d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
                       />
                     </svg>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm text-red-800">{warning.message}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm text-red-800 break-words">
+                        {warning.message}
+                      </div>
                       {warning.context && (
-                        <div className="text-xs text-red-600 mt-1 font-mono bg-red-100 p-1 rounded">
+                        <div className="text-xs text-red-600 mt-1 font-mono bg-red-100 p-1 rounded break-words">
                           {warning.context}
                         </div>
                       )}

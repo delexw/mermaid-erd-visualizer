@@ -40,6 +40,11 @@ export default function Index() {
     if (selectedTable !== tableId) {
       setSelectedRelationship(null);
     }
+
+    // Open sidebar when a table is selected from the diagram
+    if (tableId !== null && !sidebarOpen) {
+      setSidebarOpen(true);
+    }
   };
 
   const handleDataParsed = (data: ParsedERD) => {
@@ -76,11 +81,7 @@ export default function Index() {
         onClose={() => setSidebarOpen(false)}
       />
       <div className="diagram-content responsive-height">
-        <Header
-          selectedTable={selectedTable}
-          selectedRelationship={selectedRelationship}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        />
+        <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
         {hasData ? (
           /* When diagram is loaded: minimal status bar + maximized viewer */

@@ -424,11 +424,6 @@ export class ERDRenderer {
     this.relationshipComponents.clear();
 
     this.selectedTables.clear();
-
-    // Clear all content from the main group, including any lingering elements
-    this.mainGroup.selectAll('*').remove();
-    // Also clear any defs that might have been added (markers, patterns, etc.)
-    this.svg.select('defs').selectAll('marker').remove();
   }
 
   public destroy(): void {
@@ -456,15 +451,23 @@ export class ERDRenderer {
   }
 
   public toggleTable(tableId: string): void {
+    let newSelectedTable: string | null = null;
+
     if (this.selectedTables.has(tableId)) {
       // Deselect if already selected
       this.selectedTables.delete(tableId);
+      newSelectedTable = null;
     } else {
       // Select if not selected (clear others for single selection)
       this.selectedTables.clear();
       this.selectedTables.add(tableId);
+      newSelectedTable = tableId;
     }
+
     this.updateVisibility();
+
+    // Notify the parent component about the selection change
+    this.config.onTableSelect?.(newSelectedTable);
   }
 
   private updateVisibility(): void {
