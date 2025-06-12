@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
+
 import { useERD } from '~/contexts/ERDContext';
+
 import { ERDRenderer, type ERDRendererConfig } from '../lib/erdRenderer/erdRenderer.js';
+import type {
+  LayoutAlgorithm,
+  LayoutDirection,
+  HierarchyHandling,
+  NodePlacement,
+} from '../lib/erdRenderer/types/layout';
+
 import { LayoutControls } from './LayoutControls';
-import type { LayoutAlgorithm, LayoutDirection, HierarchyHandling, NodePlacement } from '../lib/erdRenderer/types/layout';
 
 interface CustomERDViewerProps {
   selectedTable: string | null;
@@ -23,7 +31,7 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
     algorithm: 'layered' as LayoutAlgorithm,
     direction: 'DOWN' as LayoutDirection,
     hierarchyHandling: 'SEPARATE_CHILDREN' as HierarchyHandling,
-    nodePlacement: 'NETWORK_SIMPLEX' as NodePlacement
+    nodePlacement: 'NETWORK_SIMPLEX' as NodePlacement,
   };
 
   // Initialize renderer
@@ -38,8 +46,8 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
       },
       showLegend: true,
       legendConfig: {
-        position: 'bottom-right'
-      }
+        position: 'bottom-right',
+      },
     };
 
     rendererRef.current = new ERDRenderer(config);
@@ -68,7 +76,8 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
     if (rendererRef.current && tables.length > 0) {
       setIsLoading(true);
       setDataLoaded(false);
-      rendererRef.current.loadData(tables, relationships)
+      rendererRef.current
+        .loadData(tables, relationships)
         .then(() => {
           setIsLoading(false);
           setDataLoaded(true);
@@ -175,10 +184,11 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={() => setShowLayoutControls(!showLayoutControls)}
             disabled={isLoading}
-            className={`p-2 rounded-md transition-colors focus-ring ${showLayoutControls
-              ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-              : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`p-2 rounded-md transition-colors focus-ring ${
+              showLayoutControls
+                ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title="Layout options"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,10 +205,11 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={handleToggleRelationships}
             disabled={isLoading}
-            className={`p-2 rounded-md transition-colors focus-ring ${showRelationships
-              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-              : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`p-2 rounded-md transition-colors focus-ring ${
+              showRelationships
+                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={showRelationships ? 'Hide relationships' : 'Show relationships'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -303,4 +314,4 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
       </div>
     </div>
   );
-} 
+}

@@ -4,8 +4,9 @@ import type {
   IPositionOffsetCalculator,
   RelationshipComponentInfo,
   ConnectionPoints,
-  OptimalConnection
+  OptimalConnection,
 } from '../types/relationshipPositioning';
+
 import { PositionOffsetCalculator } from './positionOffsetCalculator';
 
 /**
@@ -43,7 +44,10 @@ export class RelationshipPositionCalculator implements IRelationshipPositionCalc
     this.updateIndividualRelationshipPositions(relationships, fromPos, toPos);
   }
 
-  public findOptimalConnectionPoints(fromPoints: ConnectionPoints, toPoints: ConnectionPoints): OptimalConnection {
+  public findOptimalConnectionPoints(
+    fromPoints: ConnectionPoints,
+    toPoints: ConnectionPoints
+  ): OptimalConnection {
     // Calculate distances between all possible connection point pairs
     const connections = [
       { from: fromPoints.top, to: toPoints.bottom, distance: 0 },
@@ -53,7 +57,7 @@ export class RelationshipPositionCalculator implements IRelationshipPositionCalc
       { from: fromPoints.top, to: toPoints.top, distance: 0 },
       { from: fromPoints.bottom, to: toPoints.bottom, distance: 0 },
       { from: fromPoints.left, to: toPoints.left, distance: 0 },
-      { from: fromPoints.right, to: toPoints.right, distance: 0 }
+      { from: fromPoints.right, to: toPoints.right, distance: 0 },
     ];
 
     // Calculate actual distances
@@ -70,7 +74,7 @@ export class RelationshipPositionCalculator implements IRelationshipPositionCalc
 
     return {
       fromPos: optimal.from,
-      toPos: optimal.to
+      toPos: optimal.to,
     };
   }
 
@@ -86,14 +90,21 @@ export class RelationshipPositionCalculator implements IRelationshipPositionCalc
         rel.component.updatePositions(baseFromPos, baseToPos);
       } else {
         // Multiple relationships - apply offset
-        const offset = this.offsetCalculator.calculateOffset(index, relationships.length, this.relationshipSpacing);
+        const offset = this.offsetCalculator.calculateOffset(
+          index,
+          relationships.length,
+          this.relationshipSpacing
+        );
         const { adjustedFromPos, adjustedToPos } = this.offsetCalculator.applyPerpendicularOffset(
           baseFromPos,
           baseToPos,
           offset
         );
 
-        console.log(`[ERDRenderer] Updating ${rel.id} (${index + 1}/${relationships.length}):`, { adjustedFromPos, adjustedToPos });
+        console.log(`[ERDRenderer] Updating ${rel.id} (${index + 1}/${relationships.length}):`, {
+          adjustedFromPos,
+          adjustedToPos,
+        });
         rel.component.updatePositions(adjustedFromPos, adjustedToPos);
       }
     });
@@ -109,8 +120,8 @@ export class RelationshipPositionCalculator implements IRelationshipPositionCalc
         fromTable: rel.model.fromTable,
         toTable: rel.model.toTable,
         fromTableExists: !!fromTable,
-        toTableExists: !!toTable
+        toTableExists: !!toTable,
       });
     });
   }
-} 
+}

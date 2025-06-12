@@ -1,4 +1,5 @@
-import { select, type Selection } from 'd3-selection';
+import { type Selection } from 'd3-selection';
+
 import type { RelationshipModel } from '../models/relationshipModel';
 import type { Position } from '../models/tableModel';
 import { MarkerDefinitions } from '../utils/markerDefinitions';
@@ -181,4 +182,4 @@ export class RelationshipComponent {
     this.model.setHighlighted(highlighted);
     this.render();
   }
-} 
+}

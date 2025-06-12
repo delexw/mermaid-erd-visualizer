@@ -1,4 +1,4 @@
-import type { ParsedERD, ParseError } from "~/types/erd";
+import type { ParsedERD, ParseError } from '~/types/erd';
 
 export interface IValidator {
   validate(data: ParsedERD): ParseError[];
@@ -16,7 +16,7 @@ export class ERDValidator implements IValidator {
         warnings.push({
           line: 0,
           message: `Duplicate table name: ${table.name}`,
-          type: 'warning'
+          type: 'warning',
         });
       }
       duplicateCheck.add(table.name);
@@ -30,7 +30,7 @@ export class ERDValidator implements IValidator {
             warnings.push({
               line: 0,
               message: `Foreign key reference to non-existent table: ${field.foreignKeyTarget} in table ${table.name}.${field.name}`,
-              type: 'warning'
+              type: 'warning',
             });
           }
         }
@@ -43,18 +43,18 @@ export class ERDValidator implements IValidator {
         warnings.push({
           line: 0,
           message: `Relationship references non-existent table: ${relationship.fromTable}`,
-          type: 'warning'
+          type: 'warning',
         });
       }
       if (!tableNames.has(relationship.toTable)) {
         warnings.push({
           line: 0,
           message: `Relationship references non-existent table: ${relationship.toTable}`,
-          type: 'warning'
+          type: 'warning',
         });
       }
     }
 
     return warnings;
   }
-} 
+}

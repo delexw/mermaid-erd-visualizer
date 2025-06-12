@@ -1,14 +1,15 @@
 import type { RelationshipComponent } from '../components/relationshipComponent';
-import type { IRelationshipGrouper, RelationshipComponentInfo } from '../types/relationshipPositioning';
+import type {
+  IRelationshipGrouper,
+  RelationshipComponentInfo,
+} from '../types/relationshipPositioning';
 
 /**
  * Responsible for grouping relationships by table pairs
  * Follows Single Responsibility Principle
  */
 export class RelationshipGrouper implements IRelationshipGrouper {
-  constructor(
-    private readonly relationshipComponents: Map<string, RelationshipComponent>
-  ) { }
+  constructor(private readonly relationshipComponents: Map<string, RelationshipComponent>) {}
 
   public groupByTablePairs(): Map<string, RelationshipComponentInfo[]> {
     return Array.from(this.relationshipComponents.entries()).reduce(
@@ -20,7 +21,7 @@ export class RelationshipGrouper implements IRelationshipGrouper {
         existingGroup.push({
           id: relationshipId,
           component,
-          model
+          model,
         });
 
         groups.set(tableKey, existingGroup);
@@ -33,4 +34,4 @@ export class RelationshipGrouper implements IRelationshipGrouper {
   private createTablePairKey(fromTable: string, toTable: string): string {
     return `${fromTable}_${toTable}`;
   }
-} 
+}

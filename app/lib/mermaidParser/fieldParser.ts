@@ -1,4 +1,4 @@
-import type { TableField } from "~/types/erd";
+import type { TableField } from '~/types/erd';
 
 export interface IFieldParser {
   parseField(line: string): TableField | null;
@@ -51,7 +51,7 @@ export class FieldParser implements IFieldParser {
       type,
       isPrimaryKey,
       isForeignKey,
-      foreignKeyTarget: isForeignKey ? foreignKeyTarget : undefined
+      foreignKeyTarget: isForeignKey ? foreignKeyTarget : undefined,
     };
   }
-} 
+}

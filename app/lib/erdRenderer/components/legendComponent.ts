@@ -1,4 +1,5 @@
-import { Selection } from 'd3-selection';
+import type { Selection } from 'd3-selection';
+
 import { MarkerDefinitions } from '../utils/markerDefinitions';
 
 export interface LegendConfig {
@@ -10,16 +11,19 @@ export interface LegendConfig {
   show?: boolean;
 }
 
+interface LegendItem {
+  type: string;
+  label: string;
+  symbol: string;
+}
+
 export class LegendComponent {
   private svg: Selection<SVGSVGElement, unknown, null, undefined>;
   private legendGroup: Selection<SVGGElement, unknown, null, undefined>;
   private config: Required<LegendConfig>;
   private isVisible: boolean = true;
 
-  constructor(
-    svg: Selection<SVGSVGElement, unknown, null, undefined>,
-    config: LegendConfig = {}
-  ) {
+  constructor(svg: Selection<SVGSVGElement, unknown, null, undefined>, config: LegendConfig = {}) {
     this.svg = svg;
     this.config = {
       position: config.position || 'bottom-right',
@@ -27,12 +31,10 @@ export class LegendComponent {
       backgroundColor: config.backgroundColor || '#ffffff',
       borderColor: config.borderColor || '#e5e7eb',
       textColor: config.textColor || '#374151',
-      show: config.show || true
+      show: config.show || true,
     };
 
-    this.legendGroup = svg.append('g')
-      .attr('class', 'legend-group')
-      .style('pointer-events', 'all');
+    this.legendGroup = svg.append('g').attr('class', 'legend-group').style('pointer-events', 'all');
 
     this.createMarkerDefinitions();
     this.render();
@@ -45,7 +47,7 @@ export class LegendComponent {
     markerDefs.createAllMarkers(this.svg, {
       size: 'small',
       highlighted: false,
-      prefix: 'legend-'
+      prefix: 'legend-',
     });
   }
 
@@ -63,12 +65,12 @@ export class LegendComponent {
       { label: '0 or 1', type: 'zero-or-one', symbol: 'o|' },
       { label: 'Exactly 1', type: 'one', symbol: '||' },
       { label: '0 or many', type: 'zero-or-more', symbol: 'o{' },
-      { label: '1 or many', type: 'one-or-more', symbol: '}|' }
+      { label: '1 or many', type: 'one-or-more', symbol: '}|' },
     ];
 
     const relationshipItems = [
       { label: 'Identifying', type: 'solid-line', symbol: '——' },
-      { label: 'Non-identifying', type: 'dashed-line', symbol: '••' }
+      { label: 'Non-identifying', type: 'dashed-line', symbol: '••' },
     ];
 
     // Two-column layout dimensions
@@ -84,11 +86,11 @@ export class LegendComponent {
     const maxRelationshipItems = relationshipItems.length;
     const maxItemsInColumn = Math.max(maxCardinalityItems, maxRelationshipItems);
     const columnHeight = maxItemsInColumn * itemHeight;
-    const totalHeight = titleHeight + sectionHeaderHeight + columnHeight + (padding * 3);
-    const totalWidth = (columnWidth * 2) + sectionSpacing + (padding * 2); // Two columns + spacing + padding
+    const totalHeight = titleHeight + sectionHeaderHeight + columnHeight + padding * 3;
+    const totalWidth = columnWidth * 2 + sectionSpacing + padding * 2; // Two columns + spacing + padding
 
     // Create enhanced background rectangle with gradient
-    const background = this.legendGroup
+    this.legendGroup
       .append('rect')
       .attr('class', 'legend-background')
       .attr('x', 0)
@@ -128,7 +130,7 @@ export class LegendComponent {
       .attr('x', leftColumnX - 4)
       .attr('y', currentY - 4)
       .attr('width', columnWidth + 8)
-      .attr('height', sectionHeaderHeight + (cardinalityItems.length * itemHeight) + 8)
+      .attr('height', sectionHeaderHeight + cardinalityItems.length * itemHeight + 8)
       .attr('rx', 4)
       .attr('fill', '#eff6ff') // Light blue background
       .attr('stroke', '#dbeafe')
@@ -147,7 +149,7 @@ export class LegendComponent {
 
     // Render cardinality items
     cardinalityItems.forEach((item, index) => {
-      const yPos = currentY + sectionHeaderHeight + (index * itemHeight);
+      const yPos = currentY + sectionHeaderHeight + index * itemHeight;
       this.drawCompactItem(item, leftColumnX + 4, yPos, 'cardinality', columnWidth - 8);
     });
 
@@ -157,7 +159,7 @@ export class LegendComponent {
       .attr('x', rightColumnX - 4)
       .attr('y', currentY - 4)
       .attr('width', columnWidth + 8)
-      .attr('height', sectionHeaderHeight + (relationshipItems.length * itemHeight) + 8)
+      .attr('height', sectionHeaderHeight + relationshipItems.length * itemHeight + 8)
       .attr('rx', 4)
       .attr('fill', '#f0fdf4') // Light green background
       .attr('stroke', '#dcfce7')
@@ -176,7 +178,7 @@ export class LegendComponent {
 
     // Render relationship items
     relationshipItems.forEach((item, index) => {
-      const yPos = currentY + sectionHeaderHeight + (index * itemHeight);
+      const yPos = currentY + sectionHeaderHeight + index * itemHeight;
       this.drawCompactItem(item, rightColumnX + 4, yPos, 'relationship', columnWidth - 8);
     });
 
@@ -184,7 +186,13 @@ export class LegendComponent {
     this.positionLegend(totalWidth, totalHeight);
   }
 
-  private drawCompactItem(item: any, x: number, y: number, category: string, columnWidth: number = 140): void {
+  private drawCompactItem(
+    item: LegendItem,
+    x: number,
+    y: number,
+    category: string,
+    columnWidth: number = 140
+  ): void {
     const iconX = x;
     const textX = x + 26; // Icon to text spacing
     const centerY = y + 11; // Adjusted for new item height
@@ -199,7 +207,7 @@ export class LegendComponent {
     }
 
     // Add label text with better truncation handling
-    const labelText = this.legendGroup
+    this.legendGroup
       .append('text')
       .attr('x', textX)
       .attr('y', centerY + 3)
@@ -223,7 +231,7 @@ export class LegendComponent {
 
   private drawCardinalityMarker(x: number, y: number, type: string): void {
     const markerDefs = MarkerDefinitions.getInstance();
-    markerDefs.drawCardinalityInline(this.legendGroup, x, y, type, 'small');
+    markerDefs.drawCardinalityInline(this.legendGroup, x, y, type);
   }
 
   private drawRelationshipLine(x: number, y: number, type: string): void {
@@ -323,4 +331,4 @@ export class LegendComponent {
   public toggle(): void {
     this.setVisible(!this.config.show);
   }
-} 
+}

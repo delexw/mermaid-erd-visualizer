@@ -1,4 +1,4 @@
-import type { Relationship, CardinalityInfo } from "~/types/erd";
+import type { Relationship, CardinalityInfo } from '~/types/erd';
 
 export interface RelationshipTypeAnalysis {
   leftCardinality: CardinalityInfo;
@@ -14,7 +14,11 @@ export interface IRelationshipAnalyzer {
 }
 
 export class RelationshipAnalyzer implements IRelationshipAnalyzer {
-  private readonly CARDINALITY_PATTERNS: Array<{ pattern: RegExp; type: CardinalityInfo['type']; marker: string }> = [
+  private readonly CARDINALITY_PATTERNS: Array<{
+    pattern: RegExp;
+    type: CardinalityInfo['type'];
+    marker: string;
+  }> = [
     { pattern: /\|o/, type: 'zero-or-one', marker: '|o' },
     { pattern: /o\|/, type: 'zero-or-one', marker: 'o|' },
     { pattern: /\|\|/, type: 'exactly-one', marker: '||' },
@@ -46,7 +50,7 @@ export class RelationshipAnalyzer implements IRelationshipAnalyzer {
   analyzeRelationshipType(relationshipType: string): RelationshipTypeAnalysis {
     // Enhanced regex to capture the relationship pattern more precisely
     // Pattern: leftMarker + connectors + rightMarker
-    const relationshipRegex = /^([|o}{]+)([\.\-]+)([|o}{]+)$/;
+    const relationshipRegex = /^([|o}{]+)([.-]+)([|o}{]+)$/;
     const match = relationshipType.match(relationshipRegex);
 
     if (!match) {
@@ -56,7 +60,7 @@ export class RelationshipAnalyzer implements IRelationshipAnalyzer {
         relationshipType: 'one-to-many',
         isIdentifying: false,
         isValid: false,
-        error: `Invalid relationship pattern: ${relationshipType}`
+        error: `Invalid relationship pattern: ${relationshipType}`,
       };
     }
 
@@ -74,7 +78,7 @@ export class RelationshipAnalyzer implements IRelationshipAnalyzer {
         relationshipType: 'one-to-many',
         isIdentifying: isIdentifying,
         isValid: false,
-        error: `Invalid left cardinality marker: ${leftMarker}`
+        error: `Invalid left cardinality marker: ${leftMarker}`,
       };
     }
 
@@ -87,7 +91,7 @@ export class RelationshipAnalyzer implements IRelationshipAnalyzer {
         relationshipType: 'one-to-many',
         isIdentifying: isIdentifying,
         isValid: false,
-        error: `Invalid right cardinality marker: ${rightMarker}`
+        error: `Invalid right cardinality marker: ${rightMarker}`,
       };
     }
 
@@ -102,7 +106,7 @@ export class RelationshipAnalyzer implements IRelationshipAnalyzer {
         relationshipType: 'one-to-many',
         isIdentifying: isIdentifying,
         isValid: false,
-        error: `Unsupported cardinality combination: ${cardinalityKey}`
+        error: `Unsupported cardinality combination: ${cardinalityKey}`,
       };
     }
 
@@ -111,11 +115,14 @@ export class RelationshipAnalyzer implements IRelationshipAnalyzer {
       rightCardinality: rightCardinality.cardinality!,
       relationshipType: relationshipTypeResult,
       isIdentifying: isIdentifying,
-      isValid: true
+      isValid: true,
     };
   }
 
-  private analyzeCardinality(marker: string, side: 'left' | 'right'): { isValid: boolean; cardinality?: CardinalityInfo; error?: string } {
+  private analyzeCardinality(
+    marker: string,
+    side: 'left' | 'right'
+  ): { isValid: boolean; cardinality?: CardinalityInfo; error?: string } {
     // Find matching cardinality pattern
     for (const pattern of this.CARDINALITY_PATTERNS) {
       if (pattern.pattern.test(marker)) {
@@ -123,15 +130,15 @@ export class RelationshipAnalyzer implements IRelationshipAnalyzer {
           isValid: true,
           cardinality: {
             type: pattern.type,
-            marker: pattern.marker
-          }
+            marker: pattern.marker,
+          },
         };
       }
     }
 
     return {
       isValid: false,
-      error: `Unknown cardinality marker: ${marker} on ${side} side`
+      error: `Unknown cardinality marker: ${marker} on ${side} side`,
     };
   }
-} 
+}

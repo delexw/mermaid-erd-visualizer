@@ -1,5 +1,6 @@
-import type { Relationship, CardinalityInfo } from "~/types/erd";
-import type { Position } from "./tableModel";
+import type { Relationship, CardinalityInfo } from '~/types/erd';
+
+import type { Position } from './tableModel';
 
 export class RelationshipModel {
   public id: string;
@@ -98,7 +99,7 @@ export class RelationshipModel {
   public getLineStyle(): { stroke: string; strokeWidth: number; strokeDasharray?: string } {
     const baseStyle = {
       stroke: this.isHighlighted ? '#3b82f6' : '#6b7280',
-      strokeWidth: this.isHighlighted ? 2 : 1
+      strokeWidth: this.isHighlighted ? 2 : 1,
     };
 
     // Use dotted lines for non-identifying relationships, solid for identifying
@@ -127,9 +128,13 @@ export class RelationshipModel {
 
   // Get relationship markers for the endpoints based on cardinality
   public getMarkers(): { from: string; to: string } {
-    const fromMarker = this.leftCardinality ? this.cardinalityToMarker(this.leftCardinality) : 'one';
-    const toMarker = this.rightCardinality ? this.cardinalityToMarker(this.rightCardinality) : 'many';
+    const fromMarker = this.leftCardinality
+      ? this.cardinalityToMarker(this.leftCardinality)
+      : 'one';
+    const toMarker = this.rightCardinality
+      ? this.cardinalityToMarker(this.rightCardinality)
+      : 'many';
 
     return { from: fromMarker, to: toMarker };
   }
-} 
+}

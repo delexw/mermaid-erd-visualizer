@@ -1,6 +1,6 @@
 import type { RelationshipComponent } from '../components/relationshipComponent';
 import type { RelationshipModel } from '../models/relationshipModel';
-import type { TableModel, Position } from '../models/tableModel';
+import type { Position } from '../models/tableModel';
 
 export interface RelationshipComponentInfo {
   id: string;
@@ -26,10 +26,17 @@ export interface IRelationshipGrouper {
 
 export interface IRelationshipPositionCalculator {
   updateGroupPositions(relationships: RelationshipComponentInfo[]): void;
-  findOptimalConnectionPoints(fromPoints: ConnectionPoints, toPoints: ConnectionPoints): OptimalConnection;
+  findOptimalConnectionPoints(
+    fromPoints: ConnectionPoints,
+    toPoints: ConnectionPoints
+  ): OptimalConnection;
 }
 
 export interface IPositionOffsetCalculator {
   calculateOffset(index: number, totalCount: number, spacing: number): number;
-  applyPerpendicularOffset(fromPos: Position, toPos: Position, offset: number): { adjustedFromPos: Position; adjustedToPos: Position };
-} 
+  applyPerpendicularOffset(
+    fromPos: Position,
+    toPos: Position,
+    offset: number
+  ): { adjustedFromPos: Position; adjustedToPos: Position };
+}

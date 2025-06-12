@@ -1,4 +1,4 @@
-import type { Table, TableField } from "~/types/erd";
+import type { Table, TableField } from '~/types/erd';
 
 export interface Position {
   x: number;
@@ -10,7 +10,7 @@ export interface Dimensions {
   height: number;
 }
 
-export interface TableBounds extends Position, Dimensions { }
+export interface TableBounds extends Position, Dimensions {}
 
 export class TableModel {
   public id: string;
@@ -46,7 +46,7 @@ export class TableModel {
     const width = Math.max(minWidth, maxTextLength * 8 + padding * 2);
 
     // Calculate height based on fields
-    const height = headerHeight + (this.fields.length * fieldHeight) + padding;
+    const height = headerHeight + this.fields.length * fieldHeight + padding;
 
     return { width, height };
   }
@@ -54,7 +54,7 @@ export class TableModel {
   public getBounds(): TableBounds {
     return {
       ...this.position,
-      ...this.dimensions
+      ...this.dimensions,
     };
   }
 
@@ -73,14 +73,21 @@ export class TableModel {
   // Check if a point is within the table bounds
   public containsPoint(point: Position): boolean {
     const bounds = this.getBounds();
-    return point.x >= bounds.x &&
+    return (
+      point.x >= bounds.x &&
       point.x <= bounds.x + bounds.width &&
       point.y >= bounds.y &&
-      point.y <= bounds.y + bounds.height;
+      point.y <= bounds.y + bounds.height
+    );
   }
 
   // Get connection points for relationships
-  public getConnectionPoints(): { top: Position; bottom: Position; left: Position; right: Position } {
+  public getConnectionPoints(): {
+    top: Position;
+    bottom: Position;
+    left: Position;
+    right: Position;
+  } {
     const bounds = this.getBounds();
     const centerX = bounds.x + bounds.width / 2;
     const centerY = bounds.y + bounds.height / 2;
@@ -89,7 +96,7 @@ export class TableModel {
       top: { x: centerX, y: bounds.y },
       right: { x: bounds.x + bounds.width, y: centerY },
       bottom: { x: centerX, y: bounds.y + bounds.height },
-      left: { x: bounds.x, y: centerY }
+      left: { x: bounds.x, y: centerY },
     };
   }
-} 
+}

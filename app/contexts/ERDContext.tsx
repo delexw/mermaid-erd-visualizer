@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { Table, Relationship } from '~/types/erd';
+import type { ReactNode } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+
 import type { ParsedERD, ParseError } from '~/lib/mermaidParser/mermaidParser';
+import type { Table, Relationship } from '~/types/erd';
 
 interface ERDContextType {
   // Current data
@@ -68,7 +70,7 @@ export function ERDProvider({ children }: ERDProviderProps) {
       totalRelationships: relationships.length,
       totalFields,
       tablesWithForeignKeys,
-      totalWarnings: warnings.length
+      totalWarnings: warnings.length,
     };
   };
 
@@ -81,14 +83,10 @@ export function ERDProvider({ children }: ERDProviderProps) {
     hasData: tables.length > 0,
     loadData,
     clearData,
-    getStatistics
+    getStatistics,
   };
 
-  return (
-    <ERDContext.Provider value={value}>
-      {children}
-    </ERDContext.Provider>
-  );
+  return <ERDContext.Provider value={value}>{children}</ERDContext.Provider>;
 }
 
 export function useERD() {
@@ -97,4 +95,4 @@ export function useERD() {
     throw new Error('useERD must be used within an ERDProvider');
   }
   return context;
-} 
+}

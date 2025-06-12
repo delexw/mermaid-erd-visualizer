@@ -1,15 +1,18 @@
 import { select, type Selection } from 'd3-selection';
 import { zoom, zoomIdentity, zoomTransform, type ZoomBehavior } from 'd3-zoom';
+
 import 'd3-transition';
 import type { Table, Relationship } from '~/types/erd';
-import { TableModel, type Position } from './models/tableModel';
-import { RelationshipModel } from './models/relationshipModel';
-import { TableComponent } from './components/tableComponent';
+
+import type { LegendConfig } from './components/legendComponent';
+import { LegendComponent } from './components/legendComponent';
 import { RelationshipComponent } from './components/relationshipComponent';
-import { LegendComponent, LegendConfig } from './components/legendComponent';
+import { TableComponent } from './components/tableComponent';
 import { GraphLayoutEngine, type LayoutConfig } from './models/graphLayoutEngine';
-import { RelationshipPositionCalculator } from './utils/relationshipPositionCalculator';
+import { RelationshipModel } from './models/relationshipModel';
+import { TableModel } from './models/tableModel';
 import { RelationshipGrouper } from './utils/relationshipGrouper';
+import { RelationshipPositionCalculator } from './utils/relationshipPositionCalculator';
 // Zoom level constants (should match setupZoom scaleExtent)
 const MIN_ZOOM_LEVEL = 0.01;
 const MAX_ZOOM_LEVEL = 5;
@@ -84,28 +87,29 @@ export class ERDRenderer {
       .style('cursor', 'grab');
 
     // Main group for all content (affected by zoom/pan)
-    this.mainGroup = this.svg
-      .append('g')
-      .attr('class', 'main-group');
+    this.mainGroup = this.svg.append('g').attr('class', 'main-group');
   }
 
   private createGridPattern(): void {
     const defs = this.svg.append('defs');
 
-    const pattern = defs.append('pattern')
+    const pattern = defs
+      .append('pattern')
       .attr('id', 'grid')
       .attr('width', 20)
       .attr('height', 20)
       .attr('patternUnits', 'userSpaceOnUse');
 
-    pattern.append('path')
+    pattern
+      .append('path')
       .attr('d', 'M 20 0 L 0 0 0 20')
       .attr('fill', 'none')
       .attr('stroke', '#e5e5e5')
       .attr('stroke-width', 0.5);
 
     // Create background rectangle to show grid
-    this.svg.insert('rect', ':first-child')
+    this.svg
+      .insert('rect', ':first-child')
       .attr('width', '100%')
       .attr('height', '100%')
       .attr('fill', 'url(#grid)');
@@ -114,7 +118,7 @@ export class ERDRenderer {
   private setupZoom(): void {
     this.zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL])
-      .on('zoom', (event) => {
+      .on('zoom', event => {
         this.mainGroup.attr('transform', event.transform);
       })
       .on('start', () => {
@@ -122,13 +126,12 @@ export class ERDRenderer {
       })
       .on('end', () => {
         this.svg.style('cursor', 'grab');
-        const currentScale = this.getCurrentZoomScale();
       });
 
     this.svg.call(this.zoomBehavior);
 
     // Handle background clicks to deselect tables
-    this.svg.on('click', (event) => {
+    this.svg.on('click', event => {
       if (event.target === this.svg.node()) {
         this.selectTable(null);
       }
@@ -137,11 +140,11 @@ export class ERDRenderer {
 
   private setupResizeObserver(): void {
     if (typeof ResizeObserver !== 'undefined') {
-      const resizeObserver = new ResizeObserver((entries) => {
+      const resizeObserver = new ResizeObserver(entries => {
         for (const entry of entries) {
           this.containerDimensions = {
             width: entry.contentRect.width,
-            height: entry.contentRect.height
+            height: entry.contentRect.height,
           };
         }
       });
@@ -150,7 +153,8 @@ export class ERDRenderer {
   }
 
   private setupLegend(): void {
-    if (this.config.showLegend !== false) { // Default to true
+    if (this.config.showLegend !== false) {
+      // Default to true
       this.legendComponent = new LegendComponent(this.svg, this.config.legendConfig);
     }
   }
@@ -159,7 +163,9 @@ export class ERDRenderer {
     this.clear();
 
     // Debug logging
-    console.log(`[ERDRenderer] Loading data: ${tables.length} tables, ${relationships.length} relationships`);
+    console.log(
+      `[ERDRenderer] Loading data: ${tables.length} tables, ${relationships.length} relationships`
+    );
 
     // Use GraphLayoutEngine to calculate optimal positions
     const positions = await this.layoutEngine.calculateLayout(tables, relationships);
@@ -169,10 +175,10 @@ export class ERDRenderer {
       this.tableModels.set(table.id, model);
 
       const component = new TableComponent(this.mainGroup, model, {
-        onTableClick: (tableId) => this.toggleTable(tableId),
+        onTableClick: tableId => this.toggleTable(tableId),
         onTableDragStart: () => this.onTableDragStart(),
-        onTableDrag: (tableId, position) => this.onTableDrag(tableId, position),
-        onTableDragEnd: () => this.onTableDragEnd()
+        onTableDrag: () => this.onTableDrag(),
+        onTableDragEnd: () => this.onTableDragEnd(),
       });
 
       this.tableComponents.set(table.id, component);
@@ -181,8 +187,12 @@ export class ERDRenderer {
     console.log(`[ERDRenderer] Created ${this.tableModels.size} table models`);
 
     // Create relationship models and components
-    relationships.forEach((relationship) => {
-      console.log(`[ERDRenderer] Processing relationship:`, relationship.id, relationship.description);
+    relationships.forEach(relationship => {
+      console.log(
+        `[ERDRenderer] Processing relationship:`,
+        relationship.id,
+        relationship.description
+      );
       const model = new RelationshipModel(relationship);
       this.relationshipModels.set(relationship.id, model);
 
@@ -191,8 +201,13 @@ export class ERDRenderer {
       console.log(`[ERDRenderer] Created component for:`, relationship.id);
     });
 
-    console.log(`[ERDRenderer] Created ${this.relationshipComponents.size} relationship components`);
-    console.log(`[ERDRenderer] Relationship IDs in map:`, Array.from(this.relationshipComponents.keys()));
+    console.log(
+      `[ERDRenderer] Created ${this.relationshipComponents.size} relationship components`
+    );
+    console.log(
+      `[ERDRenderer] Relationship IDs in map:`,
+      Array.from(this.relationshipComponents.keys())
+    );
 
     // Wait for next frame to ensure table components are fully rendered
     await new Promise(resolve => requestAnimationFrame(resolve));
@@ -202,9 +217,10 @@ export class ERDRenderer {
   }
 
   private updateRelationshipHighlighting(): void {
-    this.relationshipComponents.forEach((component, relationshipId) => {
+    this.relationshipComponents.forEach(component => {
       const model = component.getModel();
-      const shouldHighlight = this.selectedTables.size > 0 &&
+      const shouldHighlight =
+        this.selectedTables.size > 0 &&
         (this.selectedTables.has(model.fromTable) || this.selectedTables.has(model.toTable));
 
       component.setHighlighted(!!shouldHighlight);
@@ -216,7 +232,7 @@ export class ERDRenderer {
     this.svg.on('.zoom', null);
   }
 
-  private onTableDrag(tableId: string, position: Position): void {
+  private onTableDrag(): void {
     // Update relationship positions in real-time
     this.updateRelationshipPositions();
   }
@@ -228,19 +244,19 @@ export class ERDRenderer {
   }
 
   private updateRelationshipPositions(): void {
-    console.log(`[ERDRenderer] Updating relationship positions for ${this.relationshipComponents.size} relationships`);
+    console.log(
+      `[ERDRenderer] Updating relationship positions for ${this.relationshipComponents.size} relationships`
+    );
 
     const positionCalculator = new RelationshipPositionCalculator(this.tableModels);
     const relationshipGrouper = new RelationshipGrouper(this.relationshipComponents);
 
     const relationshipGroups = relationshipGrouper.groupByTablePairs();
 
-    relationshipGroups.forEach((relationships, tableKey) => {
+    relationshipGroups.forEach(relationships => {
       positionCalculator.updateGroupPositions(relationships);
     });
   }
-
-
 
   public fitToScreen(): void {
     if (this.tableModels.size === 0) return;
@@ -261,7 +277,7 @@ export class ERDRenderer {
           // Update containerDimensions for future use
           this.containerDimensions = {
             width: containerWidth,
-            height: containerHeight
+            height: containerHeight,
           };
         }
       } catch (error) {
@@ -276,9 +292,12 @@ export class ERDRenderer {
     if (containerWidth <= 0 || containerHeight <= 0) return;
 
     // Calculate bounding box of all tables
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
 
-    this.tableModels.forEach((model) => {
+    this.tableModels.forEach(model => {
       const bounds = model.getBounds();
       minX = Math.min(minX, bounds.x);
       minY = Math.min(minY, bounds.y);
@@ -316,9 +335,7 @@ export class ERDRenderer {
 
     try {
       const transform = zoomIdentity.translate(translateX, translateY).scale(scale);
-      this.svg.transition()
-        .duration(750)
-        .call(this.zoomBehavior.transform, transform);
+      this.svg.transition().duration(750).call(this.zoomBehavior.transform, transform);
     } catch (error) {
       console.error('Error applying zoom transform:', error);
     }
@@ -327,14 +344,19 @@ export class ERDRenderer {
   public focusOnTable(tableId: string): void {
     // Check if we have any table models at all
     if (this.tableModels.size === 0) {
-      console.warn(`[${this.instanceId}] No table models loaded. Make sure loadData() has been called.`);
+      console.warn(
+        `[${this.instanceId}] No table models loaded. Make sure loadData() has been called.`
+      );
       return;
     }
 
     const model = this.tableModels.get(tableId);
     if (!model) {
       console.warn(`[${this.instanceId}] Table model not found: ${tableId}`);
-      console.warn(`[${this.instanceId}] Available table IDs:`, Array.from(this.tableModels.keys()));
+      console.warn(
+        `[${this.instanceId}] Available table IDs:`,
+        Array.from(this.tableModels.keys())
+      );
       return;
     }
 
@@ -397,7 +419,8 @@ export class ERDRenderer {
 
     try {
       const transform = zoomIdentity.translate(translateX, translateY).scale(optimalScale);
-      this.svg.transition()
+      this.svg
+        .transition()
         .duration(750)
         .ease((t: number) => t * t * (3 - 2 * t)) // Smooth ease-in-out
         .call(this.zoomBehavior.transform, transform);
@@ -407,14 +430,14 @@ export class ERDRenderer {
   }
 
   public toggleRelationshipVisibility(visible: boolean): void {
-    this.relationshipComponents.forEach((component) => {
+    this.relationshipComponents.forEach(component => {
       component.setVisible(visible);
     });
   }
 
   public clear(): void {
-    this.tableComponents.forEach((component) => component.destroy());
-    this.relationshipComponents.forEach((component) => component.destroy());
+    this.tableComponents.forEach(component => component.destroy());
+    this.relationshipComponents.forEach(component => component.destroy());
 
     this.tableModels.clear();
     this.relationshipModels.clear();
@@ -475,11 +498,14 @@ export class ERDRenderer {
   }
 
   private updateVisibility(): void {
-    console.log(`[ERDRenderer] updateVisibility called, selectedTables:`, Array.from(this.selectedTables));
+    console.log(
+      `[ERDRenderer] updateVisibility called, selectedTables:`,
+      Array.from(this.selectedTables)
+    );
 
     if (this.selectedTables.size === 0) {
       // Show all tables and relationships
-      this.tableModels.forEach((model) => {
+      this.tableModels.forEach(model => {
         model.setSelected(false);
       });
       this.tableComponents.forEach(component => component.update());
@@ -494,7 +520,8 @@ export class ERDRenderer {
       });
 
       this.relationshipComponents.forEach((relationship, id) => {
-        const isVisible = this.selectedTables.has(relationship.getModel().fromTable) ||
+        const isVisible =
+          this.selectedTables.has(relationship.getModel().fromTable) ||
           this.selectedTables.has(relationship.getModel().toTable);
         const component = this.relationshipComponents.get(id);
         component?.setVisible(isVisible);
@@ -529,4 +556,4 @@ export class ERDRenderer {
   public setLegendPosition(position: LegendConfig['position']): void {
     this.legendComponent?.setPosition(position);
   }
-} 
+}

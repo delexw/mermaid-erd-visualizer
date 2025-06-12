@@ -1,15 +1,16 @@
-import type { Table } from "~/types/erd";
-import type { IFieldParser } from "./fieldParser";
-import type { IWarningCollector } from "./warningCollector";
+import type { Table } from '~/types/erd';
+
+import type { IFieldParser } from './fieldParser';
+import type { IWarningCollector } from './warningCollector';
 
 export interface ITableParser {
   parseTable(tableBlock: string, warningCollector: IWarningCollector): Table | null;
 }
 
 export class TableParser implements ITableParser {
-  constructor(private fieldParser: IFieldParser) { }
+  constructor(private fieldParser: IFieldParser) {}
 
-  parseTable(tableBlock: string, warningCollector: IWarningCollector): Table | null {
+  parseTable(tableBlock: string): Table | null {
     const lines = tableBlock.split('\n');
     if (lines.length < 2) return null;
 
@@ -45,7 +46,7 @@ export class TableParser implements ITableParser {
       id: tableName,
       name: tableName,
       modelPath,
-      fields
+      fields,
     };
   }
-} 
+}

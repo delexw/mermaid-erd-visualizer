@@ -1,4 +1,5 @@
-import { select, type Selection } from 'd3-selection';
+import { type Selection } from 'd3-selection';
+
 import type { TableModel, Position } from '../models/tableModel';
 
 export class TableComponent {
@@ -160,26 +161,23 @@ export class TableComponent {
 
   private setupInteractions(): void {
     // Make the entire table clickable and draggable
-    this.svgGroup
-      .style('cursor', 'pointer')
-      .on('click', (event) => {
-        event.stopPropagation();
-        this.onTableClick?.(this.model.id);
-      });
+    this.svgGroup.style('cursor', 'pointer').on('click', event => {
+      event.stopPropagation();
+      this.onTableClick?.(this.model.id);
+    });
 
     // Add drag behavior
     let dragStartPos: Position | null = null;
     let initialMousePos: Position | null = null;
 
-    this.svgGroup
-      .on('mousedown', (event) => {
-        event.preventDefault();
-        dragStartPos = { ...this.model.position };
-        initialMousePos = { x: event.clientX, y: event.clientY };
-        this.model.setDragging(true);
-        this.onTableDragStart?.(this.model.id, this.model.position);
-        this.update(); // Re-render with dragging state
-      });
+    this.svgGroup.on('mousedown', event => {
+      event.preventDefault();
+      dragStartPos = { ...this.model.position };
+      initialMousePos = { x: event.clientX, y: event.clientY };
+      this.model.setDragging(true);
+      this.onTableDragStart?.(this.model.id, this.model.position);
+      this.update(); // Re-render with dragging state
+    });
 
     // Global mouse events for dragging
     if (typeof window !== 'undefined') {
@@ -190,7 +188,7 @@ export class TableComponent {
 
           const newPosition: Position = {
             x: dragStartPos.x + deltaX,
-            y: dragStartPos.y + deltaY
+            y: dragStartPos.y + deltaY,
           };
 
           this.model.setPosition(newPosition);
@@ -225,4 +223,4 @@ export class TableComponent {
   public getModel(): TableModel {
     return this.model;
   }
-} 
+}

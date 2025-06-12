@@ -1,10 +1,8 @@
-import type { Config } from 'tailwindcss'
-import typography from '@tailwindcss/typography'
+import typography from '@tailwindcss/typography';
+import type { Config } from 'tailwindcss';
 
 export default {
-  content: [
-    "./app/**/*.{js,jsx,ts,tsx}",
-  ],
+  content: ['./app/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -31,7 +29,7 @@ export default {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a',
-        }
+        },
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
@@ -47,10 +45,8 @@ export default {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
         },
-      }
+      },
     },
   },
-  plugins: [
-    typography,
-  ],
-} satisfies Config 
+  plugins: [typography],
+} satisfies Config;

@@ -1,10 +1,11 @@
-import type { ParsedERD, ParseError, ParseResult } from "~/types/erd";
-import { FieldParser } from "./fieldParser";
-import { TableParser } from "./tableParser";
-import { RelationshipAnalyzer } from "./relationshipAnalyzer";
-import { RelationshipParser } from "./relationshipParser";
-import { ERDValidator } from "./erdValidator";
-import { MermaidERDParser, type IDiagramParser } from "./diagramParser";
+import type { ParsedERD, ParseError, ParseResult } from '~/types/erd';
+
+import { MermaidERDParser, type IDiagramParser } from './diagramParser';
+import { ERDValidator } from './erdValidator';
+import { FieldParser } from './fieldParser';
+import { RelationshipAnalyzer } from './relationshipAnalyzer';
+import { RelationshipParser } from './relationshipParser';
+import { TableParser } from './tableParser';
 
 // Factory function to create the parser with all dependencies
 export const createMermaidERDParser = (): IDiagramParser => {
@@ -30,4 +31,4 @@ export const validateParsedERD = (data: ParsedERD): ParseError[] => {
 };
 
 // Re-export types for convenience
-export type { ParsedERD, ParseError, ParseResult }; 
+export type { ParsedERD, ParseError, ParseResult };

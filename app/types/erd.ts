@@ -66,10 +66,12 @@ export interface ParsedERD {
   warnings?: ParseError[];
 }
 
-export type ParseResult = {
-  success: true;
-  data: ParsedERD;
-} | {
-  success: false;
-  errors: ParseError[];
-} 
+export type ParseResult =
+  | {
+      success: true;
+      data: ParsedERD;
+    }
+  | {
+      success: false;
+      errors: ParseError[];
+    };

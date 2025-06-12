@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
+
 import { LAYOUT_OPTIONS } from '../lib/erdRenderer/types/layout';
-import type { LayoutAlgorithm, LayoutDirection, HierarchyHandling, NodePlacement } from '../lib/erdRenderer/types/layout';
+import type {
+  LayoutAlgorithm,
+  LayoutDirection,
+  HierarchyHandling,
+  NodePlacement,
+} from '../lib/erdRenderer/types/layout';
 
 export interface LayoutControlsProps {
   isVisible: boolean;
@@ -40,7 +46,7 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
       algorithm: 'layered' as LayoutAlgorithm,
       direction: 'DOWN' as LayoutDirection,
       hierarchyHandling: 'SEPARATE_CHILDREN' as HierarchyHandling,
-      nodePlacement: 'NETWORK_SIMPLEX' as NodePlacement
+      nodePlacement: 'NETWORK_SIMPLEX' as NodePlacement,
     };
   });
 
@@ -80,9 +86,7 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
       {/* Header with Active Settings */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-medium text-gray-900">Layout Options</h3>
-        <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-          Saved
-        </div>
+        <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Saved</div>
       </div>
 
       {/* Current Active Settings in Compact Badge Format */}
@@ -106,7 +110,6 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
 
       {/* Settings Grid with Clear Boundaries */}
       <div className="grid grid-cols-2 gap-4">
-
         {/* Left Column: Core Layout Settings */}
         <div className="space-y-4">
           {/* Algorithm Selection */}
@@ -116,17 +119,18 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
               <label className="text-xs font-semibold text-blue-800">Algorithm</label>
             </div>
             <div className="grid grid-cols-2 gap-1">
-              {LAYOUT_OPTIONS.algorithms.slice(0, 4).map((value) => (
+              {LAYOUT_OPTIONS.algorithms.slice(0, 4).map(value => (
                 <button
                   key={value}
                   onClick={() => handleChangeLayoutAlgorithm(value)}
                   disabled={isLoading}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${currentLayout.algorithm === value
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : isLoading
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'bg-white hover:bg-blue-100 border border-blue-200'
-                    }`}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    currentLayout.algorithm === value
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : isLoading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'bg-white hover:bg-blue-100 border border-blue-200'
+                  }`}
                 >
                   {value}
                 </button>
@@ -135,17 +139,18 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
             {/* Extra algorithm if exists */}
             {LAYOUT_OPTIONS.algorithms.length > 4 && (
               <div className="grid grid-cols-1 gap-1 mt-1">
-                {LAYOUT_OPTIONS.algorithms.slice(4).map((value) => (
+                {LAYOUT_OPTIONS.algorithms.slice(4).map(value => (
                   <button
                     key={value}
                     onClick={() => handleChangeLayoutAlgorithm(value)}
                     disabled={isLoading}
-                    className={`px-2 py-1 text-xs rounded transition-colors ${currentLayout.algorithm === value
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : isLoading
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'bg-white hover:bg-blue-100 border border-blue-200'
-                      }`}
+                    className={`px-2 py-1 text-xs rounded transition-colors ${
+                      currentLayout.algorithm === value
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : isLoading
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'bg-white hover:bg-blue-100 border border-blue-200'
+                    }`}
                   >
                     {value}
                   </button>
@@ -161,17 +166,18 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
               <label className="text-xs font-semibold text-green-800">Direction</label>
             </div>
             <div className="grid grid-cols-2 gap-1">
-              {LAYOUT_OPTIONS.directions.map((value) => (
+              {LAYOUT_OPTIONS.directions.map(value => (
                 <button
                   key={value}
                   onClick={() => handleChangeLayoutDirection(value)}
                   disabled={isLoading}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${currentLayout.direction === value
-                    ? 'bg-green-600 text-white shadow-md'
-                    : isLoading
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'bg-white hover:bg-green-100 border border-green-200'
-                    }`}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    currentLayout.direction === value
+                      ? 'bg-green-600 text-white shadow-md'
+                      : isLoading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'bg-white hover:bg-green-100 border border-green-200'
+                  }`}
                 >
                   {value}
                 </button>
@@ -189,17 +195,18 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
               <label className="text-xs font-semibold text-purple-800">Hierarchy</label>
             </div>
             <div className="space-y-1">
-              {LAYOUT_OPTIONS.hierarchyHandling.map((value) => (
+              {LAYOUT_OPTIONS.hierarchyHandling.map(value => (
                 <button
                   key={value}
                   onClick={() => handleChangeHierarchyHandling(value)}
                   disabled={isLoading}
-                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${currentLayout.hierarchyHandling === value
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : isLoading
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'bg-white hover:bg-purple-100 border border-purple-200'
-                    }`}
+                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${
+                    currentLayout.hierarchyHandling === value
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : isLoading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'bg-white hover:bg-purple-100 border border-purple-200'
+                  }`}
                 >
                   {value.replace('_', ' ')}
                 </button>
@@ -214,17 +221,18 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
               <label className="text-xs font-semibold text-orange-800">Placement</label>
             </div>
             <div className="space-y-1">
-              {LAYOUT_OPTIONS.nodePlacement.map((value) => (
+              {LAYOUT_OPTIONS.nodePlacement.map(value => (
                 <button
                   key={value}
                   onClick={() => handleChangeNodePlacement(value)}
                   disabled={isLoading}
-                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${currentLayout.nodePlacement === value
-                    ? 'bg-orange-600 text-white shadow-md'
-                    : isLoading
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'bg-white hover:bg-orange-100 border border-orange-200'
-                    }`}
+                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${
+                    currentLayout.nodePlacement === value
+                      ? 'bg-orange-600 text-white shadow-md'
+                      : isLoading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'bg-white hover:bg-orange-100 border border-orange-200'
+                  }`}
                 >
                   {value.replace('_', ' ')}
                 </button>
@@ -235,4 +243,4 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
       </div>
     </div>
   );
-} 
+}

@@ -1,8 +1,9 @@
-import type { ParseResult, Table, Relationship } from "~/types/erd";
-import type { ITableParser } from "./tableParser";
-import type { IRelationshipParser } from "./relationshipParser";
-import type { IValidator } from "./erdValidator";
-import { WarningCollector, type IWarningCollector } from "./warningCollector";
+import type { ParseResult, Table, Relationship } from '~/types/erd';
+
+import type { IValidator } from './erdValidator';
+import type { IRelationshipParser } from './relationshipParser';
+import type { ITableParser } from './tableParser';
+import { WarningCollector, type IWarningCollector } from './warningCollector';
 
 export interface IDiagramParser {
   parse(diagramText: string): ParseResult;
@@ -13,7 +14,7 @@ export class MermaidERDParser implements IDiagramParser {
     private tableParser: ITableParser,
     private relationshipParser: IRelationshipParser,
     private validator: IValidator
-  ) { }
+  ) {}
 
   parse(diagramText: string): ParseResult {
     const warningCollector = new WarningCollector();
@@ -35,14 +36,16 @@ export class MermaidERDParser implements IDiagramParser {
       const validationWarnings = this.validator.validate({
         tables,
         relationships,
-        originalDiagram: diagramText
+        originalDiagram: diagramText,
       });
 
       // Combine parsing warnings with validation warnings
       const allWarnings = [...warningCollector.getWarnings(), ...validationWarnings];
 
       // Debug logging for final results
-      console.log(`[Parser] Parsed ${tables.length} tables and ${relationships.length} relationships`);
+      console.log(
+        `[Parser] Parsed ${tables.length} tables and ${relationships.length} relationships`
+      );
       if (allWarnings.length > 0) {
         console.log(`[Parser] Generated ${allWarnings.length} warnings`);
       }
@@ -54,10 +57,9 @@ export class MermaidERDParser implements IDiagramParser {
           tables,
           relationships,
           originalDiagram: diagramText,
-          warnings: allWarnings
-        }
+          warnings: allWarnings,
+        },
       };
-
     } catch (error) {
       // Even catch blocks should return success with warnings
       console.error('[Parser] Unexpected error:', error);
@@ -68,12 +70,14 @@ export class MermaidERDParser implements IDiagramParser {
           tables,
           relationships,
           originalDiagram: diagramText,
-          warnings: [{
-            line: 0,
-            message: `Parser error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            type: 'warning'
-          }]
-        }
+          warnings: [
+            {
+              line: 0,
+              message: `Parser error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              type: 'warning',
+            },
+          ],
+        },
       };
     }
   }
@@ -82,7 +86,11 @@ export class MermaidERDParser implements IDiagramParser {
    * Extract and parse table blocks using regex-based approach
    * This is much more robust than line-by-line state management
    */
-  private extractAndParseTables(diagramText: string, tables: Table[], warningCollector: IWarningCollector): void {
+  private extractAndParseTables(
+    diagramText: string,
+    tables: Table[],
+    warningCollector: IWarningCollector
+  ): void {
     // Extract all table blocks using regex
     // This pattern matches: tableName { ... content ... }
     // It handles nested braces and multiline content properly
@@ -90,23 +98,37 @@ export class MermaidERDParser implements IDiagramParser {
 
     console.log(`[Parser] Found ${tableBlocks.length} table blocks`);
 
-    tableBlocks.forEach((block, index) => {
+    tableBlocks.forEach(block => {
       try {
         const table = this.tableParser.parseTable(block.content, warningCollector);
         if (table) {
           // Check for duplicates
           if (tables.some(t => t.id === table.id)) {
-            warningCollector.addWarning(block.lineNumber, `Duplicate table definition: ${table.id}`, block.content);
+            warningCollector.addWarning(
+              block.lineNumber,
+              `Duplicate table definition: ${table.id}`,
+              block.content
+            );
             return;
           }
           tables.push(table);
-          console.log(`[Parser] Successfully parsed table: ${table.name} with ${table.fields.length} fields`);
+          console.log(
+            `[Parser] Successfully parsed table: ${table.name} with ${table.fields.length} fields`
+          );
         } else {
-          warningCollector.addWarning(block.lineNumber, 'Failed to parse table block', block.content);
+          warningCollector.addWarning(
+            block.lineNumber,
+            'Failed to parse table block',
+            block.content
+          );
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        warningCollector.addWarning(block.lineNumber, `Error parsing table: ${errorMessage}`, block.content);
+        warningCollector.addWarning(
+          block.lineNumber,
+          `Error parsing table: ${errorMessage}`,
+          block.content
+        );
       }
     });
   }
@@ -143,7 +165,7 @@ export class MermaidERDParser implements IDiagramParser {
 
         blocks.push({
           content: completeBlock,
-          lineNumber: index + 1
+          lineNumber: index + 1,
         });
 
         processedLines.add(index);
@@ -176,7 +198,7 @@ export class MermaidERDParser implements IDiagramParser {
         if (tableBlock) {
           blocks.push({
             content: tableBlock.content,
-            lineNumber: startLineNumber
+            lineNumber: startLineNumber,
           });
 
           // Mark all lines in this block as processed
@@ -200,7 +222,10 @@ export class MermaidERDParser implements IDiagramParser {
   /**
    * Extract a complete table block starting from a given line index
    */
-  private extractCompleteTableBlock(lines: string[], startIndex: number): { content: string; endIndex: number } | null {
+  private extractCompleteTableBlock(
+    lines: string[],
+    startIndex: number
+  ): { content: string; endIndex: number } | null {
     const tableLines: string[] = [];
     let braceCount = 0;
     let i = startIndex;
@@ -218,7 +243,7 @@ export class MermaidERDParser implements IDiagramParser {
       if (braceCount === 0) {
         return {
           content: tableLines.join('\n'),
-          endIndex: i
+          endIndex: i,
         };
       }
 
@@ -238,7 +263,11 @@ export class MermaidERDParser implements IDiagramParser {
   /**
    * Extract and parse relationship definitions
    */
-  private extractAndParseRelationships(diagramText: string, relationships: Relationship[], warningCollector: IWarningCollector): void {
+  private extractAndParseRelationships(
+    diagramText: string,
+    relationships: Relationship[],
+    warningCollector: IWarningCollector
+  ): void {
     const lines = diagramText.split('\n');
 
     lines.forEach((line, index) => {
@@ -249,13 +278,20 @@ export class MermaidERDParser implements IDiagramParser {
       if (!trimmedLine || trimmedLine.startsWith('%%')) return;
 
       // Check for relationship definitions using the existing pattern
-      if (trimmedLine.match(/[A-Z0-9_-]+\s+[|o}{]+[\.\-]+[|o}{]+\s+[A-Z0-9_-]+\s*:/i)) {
+      if (trimmedLine.match(/[A-Z0-9_-]+\s+[|o}{]+[.-]+[|o}{]+\s+[A-Z0-9_-]+\s*:/i)) {
         try {
-          const relationship = this.relationshipParser.parseRelationship(trimmedLine, warningCollector);
+          const relationship = this.relationshipParser.parseRelationship(
+            trimmedLine,
+            warningCollector
+          );
           if (relationship) {
             // Check for duplicates
             if (relationships.some(r => r.id === relationship.id)) {
-              warningCollector.addWarning(lineNumber, 'Duplicate relationship definition', trimmedLine);
+              warningCollector.addWarning(
+                lineNumber,
+                'Duplicate relationship definition',
+                trimmedLine
+              );
               return;
             }
             relationships.push(relationship);
@@ -265,7 +301,11 @@ export class MermaidERDParser implements IDiagramParser {
           }
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          warningCollector.addWarning(lineNumber, `Error parsing relationship: ${errorMessage}`, trimmedLine);
+          warningCollector.addWarning(
+            lineNumber,
+            `Error parsing relationship: ${errorMessage}`,
+            trimmedLine
+          );
         }
       }
     });
@@ -288,9 +328,9 @@ export class MermaidERDParser implements IDiagramParser {
           id: tableName,
           name: tableName,
           modelPath: '', // Empty model path for implicit tables
-          fields: [] // Empty fields for implicit tables
+          fields: [], // Empty fields for implicit tables
         });
       });
     }
   }
-} 
+}

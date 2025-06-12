@@ -38,4 +38,4 @@ export class PositionOffsetCalculator implements IPositionOffsetCalculator {
 
     return { adjustedFromPos, adjustedToPos };
   }
-} 
+}

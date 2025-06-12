@@ -1,4 +1,4 @@
-import type { ParseError } from "~/types/erd";
+import type { ParseError } from '~/types/erd';
 
 export interface IWarningCollector {
   addWarning(line: number, message: string, context?: string): void;
@@ -14,7 +14,7 @@ export class WarningCollector implements IWarningCollector {
       line,
       message,
       context,
-      type: 'warning'
+      type: 'warning',
     });
   }
 
@@ -25,4 +25,4 @@ export class WarningCollector implements IWarningCollector {
   hasWarnings(): boolean {
     return this.warnings.length > 0;
   }
-} 
+}

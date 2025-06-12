@@ -5,10 +5,10 @@ const HIERARCHY_HANDLING = ['INCLUDE_CHILDREN', 'INHERIT', 'SEPARATE_CHILDREN'] 
 const NODE_PLACEMENT = ['BRANDES_KOEPF', 'LINEAR_SEGMENTS', 'NETWORK_SIMPLEX'] as const;
 
 // Derive types from arrays - no duplication!
-export type LayoutAlgorithm = typeof ALGORITHMS[number];
-export type LayoutDirection = typeof DIRECTIONS[number];
-export type HierarchyHandling = typeof HIERARCHY_HANDLING[number];
-export type NodePlacement = typeof NODE_PLACEMENT[number];
+export type LayoutAlgorithm = (typeof ALGORITHMS)[number];
+export type LayoutDirection = (typeof DIRECTIONS)[number];
+export type HierarchyHandling = (typeof HIERARCHY_HANDLING)[number];
+export type NodePlacement = (typeof NODE_PLACEMENT)[number];
 
 export interface LayoutConfig {
   algorithm: LayoutAlgorithm;
@@ -27,5 +27,5 @@ export const LAYOUT_OPTIONS = {
   algorithms: ALGORITHMS,
   directions: DIRECTIONS,
   hierarchyHandling: HIERARCHY_HANDLING,
-  nodePlacement: NODE_PLACEMENT
-} as const; 
+  nodePlacement: NODE_PLACEMENT,
+} as const;
