@@ -1,6 +1,17 @@
-# Welcome to Remix!
+# Mermaid ERD Visualizer
 
-- 📖 [Remix docs](https://remix.run/docs)
+A powerful web application for visualizing Entity Relationship Diagrams from Mermaid syntax, optimized for **large and complex ERD diagrams**.
+
+## ✨ Features
+
+- **Large Diagram Support**: Efficiently handles and renders large, complex ERD diagrams
+- **Interactive Visualization**: Pan, zoom, and explore your database schemas
+- **Mermaid Parser**: Comprehensive parsing and validation of Mermaid ERD syntax
+- **Real-time Rendering**: Instant visualization updates as you edit
+
+## ⚠️ Important Note
+
+**Before uploading your diagram, ensure it is properly formatted according to Mermaid ERD syntax.** Invalid formatting may cause parsing errors or incorrect visualization.
 
 ## Development
 
@@ -12,29 +23,21 @@ npm run dev
 
 ## Deployment
 
-First, build your app for production:
+Build for production:
 
 ```sh
 npm run build
 ```
 
-Then run the app in production mode:
+Run in production:
 
 ```sh
 npm start
 ```
 
-Now you'll need to pick a host to deploy it to.
+## Tech Stack
 
-### DIY
-
-If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-- `build/server`
-- `build/client`
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
+- **Frontend**: React, Remix, TypeScript
+- **Visualization**: D3.js, ELK.js
+- **Styling**: Tailwind CSS
+- **Parser**: Custom Mermaid ERD parser
