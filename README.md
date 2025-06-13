@@ -32,3 +32,6 @@ npm run dev
 - **Visualization**: D3.js, ELK.js
 - **Styling**: Tailwind CSS
 - **Parser**: Custom Mermaid ERD parser
+
+## License
+MIT
