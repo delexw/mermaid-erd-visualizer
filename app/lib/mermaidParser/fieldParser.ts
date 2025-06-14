@@ -28,22 +28,22 @@ export class FieldParser implements IFieldParser {
 
     // Check for annotations
     const restOfLine = parts.slice(2).join(' ');
-    const isPrimaryKey = restOfLine.includes('PK');
+    
+    // Parse PK annotations: simple "PK" (standalone) or quoted "PK"
+    const simplePkMatch = restOfLine.match(/\bPK\b/);
+    const quotedPkMatch = restOfLine.match(/["']PK["']/);
+    const isPrimaryKey = !!(simplePkMatch || quotedPkMatch);
+    
     let isForeignKey = false;
     let foreignKeyTarget = '';
 
-    // Parse FK annotation: "FK->table" or "FK->table_name"
-    const fkMatch = restOfLine.match(/FK->(\w+)/);
-    if (fkMatch) {
-      isForeignKey = true;
-      foreignKeyTarget = fkMatch[1];
-    }
+    // Parse FK annotations: simple "FK" (standalone) or quoted "FK"
+    const simpleFkMatch = restOfLine.match(/\bFK\b/);
+    const quotedFkMatch = restOfLine.match(/["']FK["']/);
 
-    // Alternative FK syntax: "FK" followed by quoted target
-    const fkQuotedMatch = restOfLine.match(/FK.*["']([^"']+)["']/);
-    if (fkQuotedMatch) {
+    if (simpleFkMatch || quotedFkMatch) {
+      // Handle FK annotation
       isForeignKey = true;
-      foreignKeyTarget = fkQuotedMatch[1];
     }
 
     return {
