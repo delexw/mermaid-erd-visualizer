@@ -56,8 +56,11 @@ export class RelationshipComponent {
     const markers = this.model.getMarkers();
     const path = this.model.calculatePath(this.fromPosition, this.toPosition);
 
+    // Create a separate group for the path and markers (rendered first/bottom)
+    const pathGroup = this.svgGroup.append('g').attr('class', 'relationship-path-group');
+
     // Create the relationship line
-    const line = this.svgGroup
+    const line = pathGroup
       .append('path')
       .attr('class', 'relationship-line')
       .attr('d', path)
@@ -102,8 +105,12 @@ export class RelationshipComponent {
       line.attr('marker-end', `url(#${endMarkerId})`);
     }
 
-    // Add relationship label if there's a description
+    // Add relationship label if there's a description - in a separate group that's appended last
+    // This ensures labels are always on top of the relationship paths
     if (this.model.description) {
+      // Create a separate group for the label (rendered last/top)
+      const labelGroup = this.svgGroup.append('g').attr('class', 'relationship-label-group');
+      
       // Calculate label position based on relationship type
       let labelX: number, labelY: number;
 
@@ -130,27 +137,56 @@ export class RelationshipComponent {
       const textWidth = this.model.description.length * estimatedCharWidth;
       const textHeight = fontSize * 1.2; // Line height
 
-      // Create background rectangle first
-      this.svgGroup
-        .append('rect')
-        .attr('x', labelX - textWidth / 2 - 3)
-        .attr('y', labelY - textHeight / 2 - 2)
-        .attr('width', textWidth + 6)
-        .attr('height', textHeight + 4)
-        .attr('fill', 'white')
-        .attr('stroke', '#e5e7eb')
-        .attr('stroke-width', 1)
-        .attr('rx', 2);
-
-      // Add text element on top
-      this.svgGroup
+      // Get colors based on highlight state
+      const bgColor = this.model.isHighlighted 
+        ? '#f3eaff' // Solid light purple bg for highlighted relationships
+        : '#f3f4f6'; // Solid light gray bg for normal relationships
+      const borderColor = lineStyle.stroke;
+      
+      // Create a temporary text element to measure the actual size
+      const tempText = labelGroup
         .append('text')
         .attr('x', labelX)
-        .attr('y', labelY + fontSize / 3) // Adjust for baseline
+        .attr('y', labelY)
         .attr('text-anchor', 'middle')
         .attr('font-family', 'Inter, sans-serif')
         .attr('font-size', `${fontSize}px`)
-        .attr('fill', '#4b5563')
+        .attr('fill', 'none') // Make it invisible
+        .text(this.model.description);
+      
+      // Get the actual text dimensions using getBBox
+      const textBox = tempText.node()?.getBBox();
+      const actualTextWidth = textBox ? textBox.width : textWidth;
+      const actualTextHeight = textBox ? textBox.height : textHeight;
+      
+      // Remove temporary text
+      tempText.remove();
+      
+      // Calculate padding
+      const paddingX = 3;
+      const paddingY = 2;
+      
+      // Create background rectangle with exact text dimensions plus minimal padding
+      labelGroup
+        .append('rect')
+        .attr('x', labelX - actualTextWidth / 2 - paddingX)
+        .attr('y', labelY - actualTextHeight / 2 - paddingY)
+        .attr('width', actualTextWidth + (paddingX * 2))
+        .attr('height', actualTextHeight + (paddingY * 2))
+        .attr('fill', bgColor)
+        .attr('stroke', borderColor)
+        .attr('stroke-width', 1)
+        .attr('rx', 3);
+
+      // Add text element on top
+      labelGroup
+        .append('text')
+        .attr('x', labelX)
+        .attr('y', labelY + actualTextHeight / 4) // Adjust for baseline
+        .attr('text-anchor', 'middle')
+        .attr('font-family', 'Inter, sans-serif')
+        .attr('font-size', `${fontSize}px`)
+        .attr('fill', this.model.isHighlighted ? '#7c3aed' : '#4b5563')
         .text(this.model.description);
     }
   }
