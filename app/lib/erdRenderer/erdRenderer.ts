@@ -497,6 +497,60 @@ export class ERDRenderer {
     }
 
     this.updateRelationshipHighlighting();
+    
+    // Bring selected tables and their relationships to the front
+    this.bringSelectedElementsToFront();
+  }
+
+  private bringSelectedElementsToFront(): void {
+    if (this.selectedTables.size === 0) {
+      // When nothing is selected, restore original rendering order
+      this.restoreOriginalRenderOrder();
+      return;
+    }
+    
+    // First, collect all elements that should be moved to front
+    const selectedTableIds = Array.from(this.selectedTables);
+    const relatedRelationshipIds: string[] = [];
+    
+    // Find relationships connected to selected tables
+    this.relationshipModels.forEach((model, id) => {
+      if (
+        this.selectedTables.has(model.fromTable) || 
+        this.selectedTables.has(model.toTable)
+      ) {
+        relatedRelationshipIds.push(id);
+      }
+    });
+
+    // Then bring tables to front (so they appear on top of relationships)
+    selectedTableIds.forEach(id => {
+      const component = this.tableComponents.get(id);
+      if (component) {
+        component.bringToFront();
+      }
+    });
+
+    // Bring relationships to front first
+    relatedRelationshipIds.forEach(id => {
+      const component = this.relationshipComponents.get(id);
+      if (component) {
+        component.bringToFront();
+      }
+    });
+  }
+  
+  // Restore the original rendering order: relationships in back, tables in front
+  private restoreOriginalRenderOrder(): void {
+    // Then place all tables on top
+    this.tableComponents.forEach(component => {
+      component.bringToFront();
+    });
+
+    // First place all relationships
+    this.relationshipComponents.forEach(component => {
+      component.bringToFront();
+    });
   }
 
   public getCurrentZoomScale(): number {

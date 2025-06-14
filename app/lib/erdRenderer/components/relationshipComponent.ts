@@ -182,4 +182,13 @@ export class RelationshipComponent {
     this.model.setHighlighted(highlighted);
     this.render();
   }
+
+  // Bring this relationship to the front by moving it to the end of its parent's children
+  public bringToFront(): void {
+    const parent = this.svgGroup.node()?.parentNode;
+    if (parent) {
+      // Reattach to parent to bring to front in SVG rendering order
+      parent.appendChild(this.svgGroup.node()!);
+    }
+  }
 }

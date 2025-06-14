@@ -209,6 +209,7 @@ export class TableComponent {
     this.dragStartPos = null;
     this.hasMoved = false;
 
+    // Remove the component
     this.svgGroup.remove();
   }
 
@@ -284,4 +285,13 @@ export class TableComponent {
     document.removeEventListener('mousemove', this.handleMouseMove);
     document.removeEventListener('mouseup', this.handleMouseUp);
   };
+
+  // Bring this table to the front by moving it to the end of its parent's children
+  public bringToFront(): void {
+    const parent = this.svgGroup.node()?.parentNode;
+    if (parent) {
+      // Reattach to parent to bring to front in SVG rendering order
+      parent.appendChild(this.svgGroup.node()!);
+    }
+  }
 }
