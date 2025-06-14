@@ -30,8 +30,8 @@ export class MarkerDefinitions {
     const highlighted = config.highlighted || false;
 
     // Use EXACT RelationshipComponent specifications
-    const color = highlighted ? '#3b82f6' : '#6b7280';
-    const strokeColor = highlighted ? '#3b82f6' : '#6b7280';
+    const color = highlighted ? '#7c3aed' : '#6b7280';
+    const strokeColor = highlighted ? '#7c3aed' : '#6b7280';
 
     // One marker (circle) - EXACT copy from RelationshipComponent
     this.createMarkerIfNotExists(defs, `${prefix}marker-one${highlighted ? '-highlighted' : ''}`, {

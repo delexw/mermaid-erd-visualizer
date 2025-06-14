@@ -98,7 +98,7 @@ export class RelationshipModel {
   // Get relationship line style based on connector type (identifying vs non-identifying)
   public getLineStyle(): { stroke: string; strokeWidth: number; strokeDasharray?: string } {
     const baseStyle = {
-      stroke: this.isHighlighted ? '#3b82f6' : '#6b7280',
+      stroke: this.isHighlighted ? '#7c3aed' : '#6b7280',
       strokeWidth: this.isHighlighted ? 2 : 1,
     };
 
