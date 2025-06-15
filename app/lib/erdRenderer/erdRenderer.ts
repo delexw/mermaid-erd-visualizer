@@ -13,6 +13,7 @@ import { RelationshipModel } from './models/relationshipModel';
 import { TableModel } from './models/tableModel';
 import { RelationshipGrouper } from './utils/relationshipGrouper';
 import { RelationshipPositionCalculator } from './utils/relationshipPositionCalculator';
+import { applyZoomToFit, calculateTablesBoundingBox, type ZoomOptions } from './utils/zoomUtils';
 // Zoom level constants (should match setupZoom scaleExtent)
 const MIN_ZOOM_LEVEL = 0.01;
 const MAX_ZOOM_LEVEL = 5;
@@ -268,84 +269,26 @@ export class ERDRenderer {
   public fitToScreen(): void {
     if (this.tableModels.size === 0) return;
 
-    // Get actual container dimensions (fallback if ResizeObserver hasn't fired yet)
-    let containerWidth = this.containerDimensions.width;
-    let containerHeight = this.containerDimensions.height;
+    // Calculate bounding box for all tables
+    const boundingBox = calculateTablesBoundingBox(this.tableModels);
+    if (!boundingBox) return;
 
-    if (containerWidth === 0 || containerHeight === 0) {
-      try {
-        const svgElement = this.svg.node();
-        if (svgElement && svgElement.parentElement) {
-          // Use parent container dimensions instead of SVG getBoundingClientRect
-          const parentRect = svgElement.parentElement.getBoundingClientRect();
-          containerWidth = parentRect.width;
-          containerHeight = parentRect.height;
+    // Add padding to the bounding box
+    const paddedBoundingBox = {
+      ...boundingBox,
+      x: boundingBox.x - 50,
+      y: boundingBox.y - 50,
+      width: boundingBox.width + 100,  // 50px padding on each side
+      height: boundingBox.height + 100, // 50px padding on each side
+    };
 
-          // Update containerDimensions for future use
-          this.containerDimensions = {
-            width: containerWidth,
-            height: containerHeight,
-          };
-        }
-      } catch (error) {
-        console.warn('Error getting container dimensions:', error);
-        // Fallback to reasonable defaults
-        containerWidth = 800;
-        containerHeight = 600;
-      }
-    }
-
-    // If we still don't have valid dimensions, exit
-    if (containerWidth <= 0 || containerHeight <= 0) return;
-
-    // Calculate bounding box of all tables
-    let minX = Infinity,
-      minY = Infinity,
-      maxX = -Infinity,
-      maxY = -Infinity;
-
-    this.tableModels.forEach(model => {
-      const bounds = model.getBounds();
-      minX = Math.min(minX, bounds.x);
-      minY = Math.min(minY, bounds.y);
-      maxX = Math.max(maxX, bounds.x + bounds.width);
-      maxY = Math.max(maxY, bounds.y + bounds.height);
+    // Apply zoom to fit all tables
+    applyZoomToFit(this.svg, this.zoomBehavior, paddedBoundingBox, this.containerDimensions, {
+      minZoom: MIN_ZOOM_LEVEL,
+      maxZoom: MAX_ZOOM_LEVEL,
+      scaleFactor: 0.9, // Leave some margin
+      duration: 750
     });
-
-    if (minX === Infinity) return;
-
-    const padding = 50;
-    const width = maxX - minX + padding * 2;
-    const height = maxY - minY + padding * 2;
-
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-
-    const scaleX = containerWidth / width;
-    const scaleY = containerHeight / height;
-    const scale = Math.min(scaleX, scaleY, 1) * 0.9; // Cap scale at 1 to prevent over-zooming
-
-    // Ensure scale is valid
-    if (!isFinite(scale) || scale <= 0) {
-      console.warn('Invalid scale calculated:', scale);
-      return;
-    }
-
-    const translateX = containerWidth / 2 - centerX * scale;
-    const translateY = containerHeight / 2 - centerY * scale;
-
-    // Ensure translations are valid
-    if (!isFinite(translateX) || !isFinite(translateY)) {
-      console.warn('Invalid translation calculated:', translateX, translateY);
-      return;
-    }
-
-    try {
-      const transform = zoomIdentity.translate(translateX, translateY).scale(scale);
-      this.svg.transition().duration(750).call(this.zoomBehavior.transform, transform);
-    } catch (error) {
-      console.error('Error applying zoom transform:', error);
-    }
   }
 
   public focusOnTable(tableId: string): void {
@@ -367,73 +310,19 @@ export class ERDRenderer {
       return;
     }
 
-    // Get actual container dimensions
-    let containerWidth = this.containerDimensions.width;
-    let containerHeight = this.containerDimensions.height;
-
-    if (containerWidth === 0 || containerHeight === 0) {
-      try {
-        const svgElement = this.svg.node();
-        if (svgElement?.parentElement) {
-          const parentRect = svgElement.parentElement.getBoundingClientRect();
-          containerWidth = parentRect.width;
-          containerHeight = parentRect.height;
-          this.containerDimensions = { width: containerWidth, height: containerHeight };
-        }
-      } catch (error) {
-        console.warn('Error getting container dimensions:', error);
-        containerWidth = 800;
-        containerHeight = 600;
-      }
-    }
-
-    if (containerWidth <= 0 || containerHeight <= 0) {
-      console.warn('Invalid container dimensions:', containerWidth, containerHeight);
-      return;
-    }
-
-    // Get table bounds
+    // Get the bounds of the table to focus on
     const bounds = model.getBounds();
-    const tableCenterX = bounds.x + bounds.width / 2;
-    const tableCenterY = bounds.y + bounds.height / 2;
 
-    // Calculate optimal scale to fit the table nicely in the viewport
-    const paddingFactor = 0.6; // Leave 40% padding around the table for better visual spacing
-    const availableWidth = containerWidth * paddingFactor;
-    const availableHeight = containerHeight * paddingFactor;
-
-    const scaleX = availableWidth / bounds.width;
-    const scaleY = availableHeight / bounds.height;
-
-    // Use the smaller scale to ensure the table fits entirely
-    let optimalScale = Math.min(scaleX, scaleY);
-
-    // For table focusing, use a more conservative max zoom to prevent overly large tables
+    // For table focusing, use a more conservative max zoom
     const focusMaxZoom = Math.min(MAX_ZOOM_LEVEL, 2.5); // Cap focus zoom at 2.5x for better UX
 
-    // Clamp the scale within reasonable limits
-    optimalScale = Math.max(MIN_ZOOM_LEVEL, Math.min(focusMaxZoom, optimalScale));
-
-    // Calculate translation to center the table
-    const translateX = containerWidth / 2 - tableCenterX * optimalScale;
-    const translateY = containerHeight / 2 - tableCenterY * optimalScale;
-
-    // Validate transform values
-    if (!isFinite(translateX) || !isFinite(translateY) || !isFinite(optimalScale)) {
-      console.warn('Invalid transform values:', { translateX, translateY, optimalScale });
-      return;
-    }
-
-    try {
-      const transform = zoomIdentity.translate(translateX, translateY).scale(optimalScale);
-      this.svg
-        .transition()
-        .duration(750)
-        .ease((t: number) => t * t * (3 - 2 * t)) // Smooth ease-in-out
-        .call(this.zoomBehavior.transform, transform);
-    } catch (error) {
-      console.error('Error applying focus transform:', error);
-    }
+    // Apply zoom to fit the table with appropriate padding
+    applyZoomToFit(this.svg, this.zoomBehavior, bounds, this.containerDimensions, {
+      minZoom: MIN_ZOOM_LEVEL,
+      maxZoom: focusMaxZoom,
+      padding: { factor: 0.6 }, // Leave 40% of the screen as padding around the table
+      duration: 750
+    });
   }
 
   public toggleRelationshipVisibility(visible: boolean): void {
@@ -501,26 +390,25 @@ export class ERDRenderer {
   private updateVisibility(): void {
     if (this.selectedTables.size === 0) {
       // Show all tables and relationships
-      this.tableModels.forEach(model => {
-        model.setSelected(false);
+      this.tableComponents.forEach(component => {
+        component.setSelected(false);
       });
-      this.tableComponents.forEach(component => component.update());
-      this.relationshipComponents.forEach(component => component.setVisible(true));
+      this.relationshipComponents.forEach(component => {
+        component.setVisible(true);
+      });
     } else {
       // Show only selected tables and their relationships
-      this.tableModels.forEach((table, id) => {
+      this.tableComponents.forEach((component, id) => {
         const isSelected = this.selectedTables.has(id);
-        table.setSelected(isSelected);
-        const component = this.tableComponents.get(id);
-        component?.update();
+        component.setSelected(isSelected);
       });
 
-      this.relationshipComponents.forEach((relationship, id) => {
+      this.relationshipComponents.forEach(component => {
+        const model = component.getModel();
         const isVisible =
-          this.selectedTables.has(relationship.getModel().fromTable) ||
-          this.selectedTables.has(relationship.getModel().toTable);
-        const component = this.relationshipComponents.get(id);
-        component?.setVisible(isVisible);
+          this.selectedTables.has(model.fromTable) ||
+          this.selectedTables.has(model.toTable);
+        component.setVisible(isVisible);
       });
     }
 

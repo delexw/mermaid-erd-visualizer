@@ -248,50 +248,58 @@ export class TableComponent {
         }
       }
 
-      const scaledDeltaX = deltaX / scale;
-      const scaledDeltaY = deltaY / scale;
+      // Apply the delta to the original position
+      const newX = this.dragStartPos.x + deltaX / scale;
+      const newY = this.dragStartPos.y + deltaY / scale;
 
-      const newPosition: Position = {
-        x: this.dragStartPos.x + scaledDeltaX,
-        y: this.dragStartPos.y + scaledDeltaY,
-      };
+      // Update position
+      this.model.setPosition({ x: newX, y: newY });
 
-      this.model.setPosition(newPosition);
-      this.onTableDrag?.(this.model.id, newPosition);
-      this.update();
+      // Update visual position
+      this.svgGroup.attr('transform', `translate(${newX}, ${newY})`);
+
+      // Notify parent about drag
+      this.onTableDrag?.(this.model.id, { x: newX, y: newY });
     }
   };
 
   private handleMouseUp = (event: MouseEvent): void => {
-    console.log('Mouse up:', event);
-    console.log('Model position:', this.model.position);
-    // Only call drag end if we were actually dragging
+    // Stop dragging
     if (this.model.isDragging) {
       this.model.setDragging(false);
       this.onTableDragEnd?.(this.model.id);
-      this.update();
     }
 
-    // Reset all drag state
-    this.mouseDownPos = null;
-    this.dragStartPos = null;
-
-    // Reset hasMoved after a short delay to allow click event to process
-    setTimeout(() => {
-      this.hasMoved = false;
-    }, 10);
-
-    // Always remove global listeners when mouse is released
+    // Clean up listeners to prevent memory leaks
     document.removeEventListener('mousemove', this.handleMouseMove);
     document.removeEventListener('mouseup', this.handleMouseUp);
+
+    // Reset state
+    this.mouseDownPos = null;
+    this.dragStartPos = null;
   };
 
-  // Bring this table to the front by moving it to the end of its parent's children
   public bringToFront(): void {
     const parent = this.svgGroup.node()?.parentNode;
     if (parent) {
       // Reattach to parent to bring to front in SVG rendering order
       parent.appendChild(this.svgGroup.node()!);
     }
+  }
+
+  // Add setter methods to match the pattern in other components
+  public setSelected(selected: boolean): void {
+    this.model.setSelected(selected);
+    this.render();
+  }
+
+  public setDragging(dragging: boolean): void {
+    this.model.setDragging(dragging);
+    this.render();
+  }
+
+  public setPosition(position: Position): void {
+    this.model.setPosition(position);
+    this.render();
   }
 }
