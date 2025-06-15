@@ -38,7 +38,6 @@ export class TableComponent {
       .attr('data-table-id', model.id);
 
     this.render();
-    this.setupDragInteractions();
   }
 
   private render(): void {
@@ -58,6 +57,27 @@ export class TableComponent {
       .attr('width', bounds.width)
       .attr('height', bounds.height);
 
+    // Determine table styling based on selection and greyed out state
+    let backgroundColor, borderStyle, headerStyle, textColor;
+
+    if (this.model.isSelected) {
+      backgroundColor = '#eef2ff'; // Softer indigo/blue bg for selected
+      borderStyle = '2px solid #6366f1'; // Softer indigo border for selected
+      headerStyle = '#6366f1'; // Softer indigo header for selected
+      textColor = '#1f2937'; // Normal text for selected
+    } else if (this.model.isGreyedOut) {
+      backgroundColor = '#f9fafb'; // Very light grey bg for greyed out
+      borderStyle = '1px solid #9ca3af'; // Darker border for greyed out to improve visibility
+      headerStyle = '#e5e7eb'; // Slightly darker grey header for greyed out
+      textColor = '#6b7280'; // Darker grey text for greyed out to improve visibility
+    } else {
+      console.log('default table');
+      backgroundColor = '#ffffff'; // Regular white bg
+      borderStyle = '1px solid #38bdf8'; // Sky blue border for default tables
+      headerStyle = '#bae6fd'; // Light sky blue header background for default tables
+      textColor = '#1f2937'; // Regular text
+    }
+
     // Create the main table container div
     const tableDiv = foreignObject
       .append('xhtml:div')
@@ -66,14 +86,15 @@ export class TableComponent {
       .style('font-family', 'Inter, sans-serif')
       .style('cursor', 'pointer')
       .style('user-select', 'none')
-      .style('background-color', this.model.isSelected ? '#dbeafe' : '#ffffff')
-      .style('border', this.model.isSelected ? '2px solid #3b82f6' : '1px solid #d1d5db')
+      .style('background-color', backgroundColor)
+      .style('border', borderStyle)
       .style('border-radius', '8px')
       .style('box-shadow', '0 1px 3px 0 rgba(0, 0, 0, 0.1)')
       .style('overflow', 'hidden')
       .style('display', 'flex')
       .style('flex-direction', 'column')
-      .style('box-sizing', 'border-box');
+      .style('box-sizing', 'border-box')
+      .style('opacity', this.model.isGreyedOut ? '0.85' : '1');
 
     // Handle both click and drag on the HTML div to avoid conflicts
     tableDiv.on('mousedown', event => {
@@ -103,8 +124,8 @@ export class TableComponent {
     // Create table header
     tableDiv
       .append('xhtml:div')
-      .style('background-color', this.model.isSelected ? '#3b82f6' : '#f3f4f6')
-      .style('color', this.model.isSelected ? '#ffffff' : '#1f2937')
+      .style('background-color', headerStyle)
+      .style('color', this.model.isSelected ? '#ffffff' : textColor)
       .style('padding', '12px 16px')
       .style('font-weight', '600')
       .style('font-size', '14px')
@@ -170,7 +191,7 @@ export class TableComponent {
         .append('xhtml:div')
         .style('flex', '1')
         .style('font-weight', field.isPrimaryKey ? '600' : '400')
-        .style('color', '#374151')
+        .style('color', textColor)
         .style('min-width', '0')
         .style('white-space', 'nowrap')
         .style('overflow', 'hidden')
@@ -180,16 +201,11 @@ export class TableComponent {
       // Field type
       fieldDiv
         .append('xhtml:div')
-        .style('color', '#6b7280')
-        .style('font-size', '11px')
-        .style('flex-shrink', '0')
+        .style('color', this.model.isGreyedOut ? '#d1d5db' : '#0284c7')
+        .style('font-size', '10px')
+        .style('white-space', 'nowrap')
         .text(field.type);
     });
-  }
-
-  private setupDragInteractions(): void {
-    // Drag interactions are now handled directly in the render method on the HTML div
-    // This avoids conflicts between SVG and HTML event handling
   }
 
   public update(): void {
@@ -260,6 +276,7 @@ export class TableComponent {
 
       // Notify parent about drag
       this.onTableDrag?.(this.model.id, { x: newX, y: newY });
+      this.update();
     }
   };
 
@@ -290,6 +307,11 @@ export class TableComponent {
   // Add setter methods to match the pattern in other components
   public setSelected(selected: boolean): void {
     this.model.setSelected(selected);
+    this.render();
+  }
+
+  public setGreyedOut(greyedOut: boolean): void {
+    this.model.setGreyedOut(greyedOut);
     this.render();
   }
 

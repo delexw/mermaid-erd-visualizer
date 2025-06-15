@@ -3,6 +3,7 @@ import type { Selection } from 'd3-selection';
 export interface MarkerConfig {
   size: 'small' | 'normal';
   highlighted?: boolean;
+  greyedOut?: boolean;
   prefix?: string;
 }
 
@@ -28,13 +29,31 @@ export class MarkerDefinitions {
 
     const prefix = config.prefix || '';
     const highlighted = config.highlighted || false;
+    const greyedOut = config.greyedOut || false;
 
-    // Use EXACT RelationshipComponent specifications
-    const color = highlighted ? '#7c3aed' : '#6b7280';
-    const strokeColor = highlighted ? '#7c3aed' : '#6b7280';
+    // Set color based on state
+    let color, strokeColor;
+    if (highlighted) {
+      color = '#8b5cf6'; // Purple for highlighted relationships
+      strokeColor = '#8b5cf6';
+    } else if (greyedOut) {
+      color = '#9ca3af'; // Darker grey for greyed out to improve visibility
+      strokeColor = '#9ca3af';
+    } else {
+      color = '#0ea5e9'; // Sky blue for default state - colorful default
+      strokeColor = '#0ea5e9';
+    }
 
-    // One marker (circle) - EXACT copy from RelationshipComponent
-    this.createMarkerIfNotExists(defs, `${prefix}marker-one${highlighted ? '-highlighted' : ''}`, {
+    // Determine the marker suffix
+    let suffix = '';
+    if (highlighted) {
+      suffix = '-highlighted';
+    } else if (greyedOut) {
+      suffix = '-greyed';
+    }
+
+    // One marker (circle)
+    this.createMarkerIfNotExists(defs, `${prefix}marker-one${suffix}`, {
       viewBox: '0 0 12 12',
       refX: 6,
       refY: 6,
@@ -48,12 +67,12 @@ export class MarkerDefinitions {
           .attr('r', 4)
           .attr('fill', 'none')
           .attr('stroke', strokeColor)
-          .attr('stroke-width', highlighted ? 2.5 : 1.5);
+          .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 1.5);
       },
     });
 
-    // Many marker (arrow) - EXACT copy from RelationshipComponent
-    this.createMarkerIfNotExists(defs, `${prefix}marker-many${highlighted ? '-highlighted' : ''}`, {
+    // Many marker (arrow)
+    this.createMarkerIfNotExists(defs, `${prefix}marker-many${suffix}`, {
       viewBox: '0 0 12 12',
       refX: 10,
       refY: 6,
@@ -64,185 +83,157 @@ export class MarkerDefinitions {
       },
     });
 
-    // Many start marker - EXACT copy from RelationshipComponent
-    this.createMarkerIfNotExists(
-      defs,
-      `${prefix}marker-many-start${highlighted ? '-highlighted' : ''}`,
-      {
-        viewBox: '0 0 12 12',
-        refX: 2,
-        refY: 6,
-        markerWidth: 10,
-        markerHeight: 10,
-        content: marker => {
-          marker.append('path').attr('d', 'M10,2 L2,6 L10,10 z').attr('fill', color);
-        },
-      }
-    );
+    // Many start marker
+    this.createMarkerIfNotExists(defs, `${prefix}marker-many-start${suffix}`, {
+      viewBox: '0 0 12 12',
+      refX: 2,
+      refY: 6,
+      markerWidth: 10,
+      markerHeight: 10,
+      content: marker => {
+        marker.append('path').attr('d', 'M10,2 L2,6 L10,10 z').attr('fill', color);
+      },
+    });
 
-    // Zero or one marker (circle + line) - EXACT copy from RelationshipComponent
-    this.createMarkerIfNotExists(
-      defs,
-      `${prefix}marker-zero-or-one${highlighted ? '-highlighted' : ''}`,
-      {
-        viewBox: '0 0 16 12',
-        refX: 14,
-        refY: 6,
-        markerWidth: 12,
-        markerHeight: 10,
-        content: marker => {
-          marker
-            .append('circle')
-            .attr('cx', 4)
-            .attr('cy', 6)
-            .attr('r', 3.5)
-            .attr('fill', 'none')
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', highlighted ? 2.5 : 1.5);
+    // Zero or one marker (circle + line)
+    this.createMarkerIfNotExists(defs, `${prefix}marker-zero-or-one${suffix}`, {
+      viewBox: '0 0 16 12',
+      refX: 14,
+      refY: 6,
+      markerWidth: 12,
+      markerHeight: 10,
+      content: marker => {
+        marker
+          .append('circle')
+          .attr('cx', 4)
+          .attr('cy', 6)
+          .attr('r', 3.5)
+          .attr('fill', 'none')
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 1.5);
 
-          marker
-            .append('line')
-            .attr('x1', 11)
-            .attr('y1', 2)
-            .attr('x2', 11)
-            .attr('y2', 10)
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', highlighted ? 2.5 : 2);
-        },
-      }
-    );
+        marker
+          .append('line')
+          .attr('x1', 11)
+          .attr('y1', 2)
+          .attr('x2', 11)
+          .attr('y2', 10)
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 2);
+      },
+    });
 
-    // Zero or one start marker - EXACT copy from RelationshipComponent
-    this.createMarkerIfNotExists(
-      defs,
-      `${prefix}marker-zero-or-one-start${highlighted ? '-highlighted' : ''}`,
-      {
-        viewBox: '0 0 16 12',
-        refX: 2,
-        refY: 6,
-        markerWidth: 12,
-        markerHeight: 10,
-        content: marker => {
-          marker
-            .append('line')
-            .attr('x1', 5)
-            .attr('y1', 2)
-            .attr('x2', 5)
-            .attr('y2', 10)
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', highlighted ? 2.5 : 2);
+    // Zero or one start marker
+    this.createMarkerIfNotExists(defs, `${prefix}marker-zero-or-one-start${suffix}`, {
+      viewBox: '0 0 16 12',
+      refX: 2,
+      refY: 6,
+      markerWidth: 12,
+      markerHeight: 10,
+      content: marker => {
+        marker
+          .append('line')
+          .attr('x1', 5)
+          .attr('y1', 2)
+          .attr('x2', 5)
+          .attr('y2', 10)
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 2);
 
-          marker
-            .append('circle')
-            .attr('cx', 12)
-            .attr('cy', 6)
-            .attr('r', 3.5)
-            .attr('fill', 'none')
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', highlighted ? 2.5 : 1.5);
-        },
-      }
-    );
+        marker
+          .append('circle')
+          .attr('cx', 12)
+          .attr('cy', 6)
+          .attr('r', 3.5)
+          .attr('fill', 'none')
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 1.5);
+      },
+    });
 
-    // Zero or more marker (circle + arrow) - EXACT copy from RelationshipComponent
-    this.createMarkerIfNotExists(
-      defs,
-      `${prefix}marker-zero-or-more${highlighted ? '-highlighted' : ''}`,
-      {
-        viewBox: '0 0 18 12',
-        refX: 16,
-        refY: 6,
-        markerWidth: 14,
-        markerHeight: 10,
-        content: marker => {
-          marker
-            .append('circle')
-            .attr('cx', 4)
-            .attr('cy', 6)
-            .attr('r', 3.5)
-            .attr('fill', 'none')
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', highlighted ? 2.5 : 1.5);
+    // Zero or more marker (circle + arrow)
+    this.createMarkerIfNotExists(defs, `${prefix}marker-zero-or-more${suffix}`, {
+      viewBox: '0 0 18 12',
+      refX: 16,
+      refY: 6,
+      markerWidth: 14,
+      markerHeight: 10,
+      content: marker => {
+        marker
+          .append('circle')
+          .attr('cx', 4)
+          .attr('cy', 6)
+          .attr('r', 3.5)
+          .attr('fill', 'none')
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 1.5);
 
-          marker.append('path').attr('d', 'M9,2 L16,6 L9,10 z').attr('fill', color);
-        },
-      }
-    );
+        marker.append('path').attr('d', 'M9,2 L16,6 L9,10 z').attr('fill', color);
+      },
+    });
 
-    // Zero or more start marker - EXACT copy from RelationshipComponent
-    this.createMarkerIfNotExists(
-      defs,
-      `${prefix}marker-zero-or-more-start${highlighted ? '-highlighted' : ''}`,
-      {
-        viewBox: '0 0 18 12',
-        refX: 2,
-        refY: 6,
-        markerWidth: 14,
-        markerHeight: 10,
-        content: marker => {
-          marker.append('path').attr('d', 'M9,2 L2,6 L9,10 z').attr('fill', color);
+    // Zero or more start marker
+    this.createMarkerIfNotExists(defs, `${prefix}marker-zero-or-more-start${suffix}`, {
+      viewBox: '0 0 18 12',
+      refX: 2,
+      refY: 6,
+      markerWidth: 14,
+      markerHeight: 10,
+      content: marker => {
+        marker.append('path').attr('d', 'M9,2 L2,6 L9,10 z').attr('fill', color);
 
-          marker
-            .append('circle')
-            .attr('cx', 14)
-            .attr('cy', 6)
-            .attr('r', 3.5)
-            .attr('fill', 'none')
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', highlighted ? 2.5 : 1.5);
-        },
-      }
-    );
+        marker
+          .append('circle')
+          .attr('cx', 14)
+          .attr('cy', 6)
+          .attr('r', 3.5)
+          .attr('fill', 'none')
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 1.5);
+      },
+    });
 
-    // One or more marker (line + arrow) - EXACT copy from RelationshipComponent
-    this.createMarkerIfNotExists(
-      defs,
-      `${prefix}marker-one-or-more${highlighted ? '-highlighted' : ''}`,
-      {
-        viewBox: '0 0 18 12',
-        refX: 16,
-        refY: 6,
-        markerWidth: 14,
-        markerHeight: 10,
-        content: marker => {
-          marker
-            .append('line')
-            .attr('x1', 4)
-            .attr('y1', 2)
-            .attr('x2', 4)
-            .attr('y2', 10)
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', highlighted ? 2.5 : 2);
+    // One or more marker (line + arrow)
+    this.createMarkerIfNotExists(defs, `${prefix}marker-one-or-more${suffix}`, {
+      viewBox: '0 0 18 12',
+      refX: 16,
+      refY: 6,
+      markerWidth: 14,
+      markerHeight: 10,
+      content: marker => {
+        marker
+          .append('line')
+          .attr('x1', 4)
+          .attr('y1', 2)
+          .attr('x2', 4)
+          .attr('y2', 10)
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 2);
 
-          marker.append('path').attr('d', 'M9,2 L16,6 L9,10 z').attr('fill', color);
-        },
-      }
-    );
+        marker.append('path').attr('d', 'M9,2 L16,6 L9,10 z').attr('fill', color);
+      },
+    });
 
-    // One or more start marker - EXACT copy from RelationshipComponent
-    this.createMarkerIfNotExists(
-      defs,
-      `${prefix}marker-one-or-more-start${highlighted ? '-highlighted' : ''}`,
-      {
-        viewBox: '0 0 18 12',
-        refX: 2,
-        refY: 6,
-        markerWidth: 14,
-        markerHeight: 10,
-        content: marker => {
-          marker.append('path').attr('d', 'M9,2 L2,6 L9,10 z').attr('fill', color);
+    // One or more start marker
+    this.createMarkerIfNotExists(defs, `${prefix}marker-one-or-more-start${suffix}`, {
+      viewBox: '0 0 18 12',
+      refX: 2,
+      refY: 6,
+      markerWidth: 14,
+      markerHeight: 10,
+      content: marker => {
+        marker.append('path').attr('d', 'M9,2 L2,6 L9,10 z').attr('fill', color);
 
-          marker
-            .append('line')
-            .attr('x1', 14)
-            .attr('y1', 2)
-            .attr('x2', 14)
-            .attr('y2', 10)
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', highlighted ? 2.5 : 2);
-        },
-      }
-    );
+        marker
+          .append('line')
+          .attr('x1', 14)
+          .attr('y1', 2)
+          .attr('x2', 14)
+          .attr('y2', 10)
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 2);
+      },
+    });
   }
 
   private createMarkerIfNotExists(

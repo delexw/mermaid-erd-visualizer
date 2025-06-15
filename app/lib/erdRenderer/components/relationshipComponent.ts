@@ -39,6 +39,9 @@ export class RelationshipComponent {
 
     // Create highlighted markers using the shared utility with exact RelationshipComponent specs
     markerDefs.createAllMarkers(svg, { size: 'normal', highlighted: true });
+
+    // Create greyed-out markers
+    markerDefs.createAllMarkers(svg, { size: 'normal', greyedOut: true });
   }
 
   private render(): void {
@@ -73,7 +76,12 @@ export class RelationshipComponent {
     }
 
     // Add markers
-    const markerSuffix = this.model.isHighlighted ? '-highlighted' : '';
+    let markerSuffix = '';
+    if (this.model.isHighlighted) {
+      markerSuffix = '-highlighted';
+    } else if (this.model.isGreyedOut) {
+      markerSuffix = '-greyed';
+    }
 
     // Choose the correct marker for start and end positions
     let startMarkerId = '';
@@ -110,7 +118,7 @@ export class RelationshipComponent {
     if (this.model.description) {
       // Create a separate group for the label (rendered last/top)
       const labelGroup = this.svgGroup.append('g').attr('class', 'relationship-label-group');
-      
+
       // Calculate label position based on relationship type
       let labelX: number, labelY: number;
 
@@ -137,12 +145,20 @@ export class RelationshipComponent {
       const textWidth = this.model.description.length * estimatedCharWidth;
       const textHeight = fontSize * 1.2; // Line height
 
-      // Get colors based on highlight state
-      const bgColor = this.model.isHighlighted 
-        ? '#f3eaff' // Solid light purple bg for highlighted relationships
-        : '#f3f4f6'; // Solid light gray bg for normal relationships
-      const borderColor = lineStyle.stroke;
-      
+      // Get colors based on highlight or greyed out state
+      let bgColor, textColor;
+
+      if (this.model.isHighlighted) {
+        bgColor = '#f5f3ff'; // Light purple bg for highlighted relationships
+        textColor = '#8b5cf6'; // Purple for highlighted relationships (matching the stroke)
+      } else if (this.model.isGreyedOut) {
+        bgColor = '#f3f4f6'; // Slightly darker bg for greyed out relationships
+        textColor = '#6b7280'; // Darker grey for greyed out text to improve visibility
+      } else {
+        bgColor = '#e0f2fe'; // Light sky blue bg for normal relationships
+        textColor = '#0284c7'; // Sky blue text color that matches the new relationship color
+      }
+
       // Create a temporary text element to measure the actual size
       const tempText = labelGroup
         .append('text')
@@ -153,19 +169,19 @@ export class RelationshipComponent {
         .attr('font-size', `${fontSize}px`)
         .attr('fill', 'none') // Make it invisible
         .text(this.model.description);
-      
+
       // Get the actual text dimensions using getBBox
       const textBox = tempText.node()?.getBBox();
       const actualTextWidth = textBox ? textBox.width : textWidth;
       const actualTextHeight = textBox ? textBox.height : textHeight;
-      
+
       // Remove temporary text
       tempText.remove();
-      
+
       // Calculate padding
       const paddingX = 3;
       const paddingY = 2;
-      
+
       // Create background rectangle with exact text dimensions plus minimal padding
       labelGroup
         .append('rect')
@@ -174,7 +190,7 @@ export class RelationshipComponent {
         .attr('width', actualTextWidth + (paddingX * 2))
         .attr('height', actualTextHeight + (paddingY * 2))
         .attr('fill', bgColor)
-        .attr('stroke', borderColor)
+        .attr('stroke', lineStyle.stroke)
         .attr('stroke-width', 1)
         .attr('rx', 3);
 
@@ -186,7 +202,7 @@ export class RelationshipComponent {
         .attr('text-anchor', 'middle')
         .attr('font-family', 'Inter, sans-serif')
         .attr('font-size', `${fontSize}px`)
-        .attr('fill', this.model.isHighlighted ? '#7c3aed' : '#4b5563')
+        .attr('fill', textColor)
         .text(this.model.description);
     }
   }
@@ -216,6 +232,11 @@ export class RelationshipComponent {
 
   public setHighlighted(highlighted: boolean): void {
     this.model.setHighlighted(highlighted);
+    this.render();
+  }
+
+  public setGreyedOut(greyedOut: boolean): void {
+    this.model.setGreyedOut(greyedOut);
     this.render();
   }
 

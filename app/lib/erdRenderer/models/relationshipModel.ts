@@ -10,6 +10,7 @@ export class RelationshipModel {
   public description?: string;
   public isVisible: boolean = true;
   public isHighlighted: boolean = false;
+  public isGreyedOut: boolean = false; // New property for greyed out state
   public leftCardinality?: CardinalityInfo;
   public rightCardinality?: CardinalityInfo;
   public isIdentifying: boolean = true; // Default to identifying (solid line)
@@ -64,6 +65,10 @@ export class RelationshipModel {
     this.isHighlighted = highlighted;
   }
 
+  public setGreyedOut(greyedOut: boolean): void {
+    this.isGreyedOut = greyedOut;
+  }
+
   // Calculate the path for the relationship line
   public calculatePath(fromPos: Position, toPos: Position): string {
     // Check if this is a self-referencing relationship (same position)
@@ -97,10 +102,25 @@ export class RelationshipModel {
 
   // Get relationship line style based on connector type (identifying vs non-identifying)
   public getLineStyle(): { stroke: string; strokeWidth: number; strokeDasharray?: string } {
-    const baseStyle = {
-      stroke: this.isHighlighted ? '#7c3aed' : '#6b7280',
-      strokeWidth: this.isHighlighted ? 2 : 1,
-    };
+    let baseStyle;
+
+    if (this.isHighlighted) {
+      // Use a distinct color for highlighted relationships - different from selected tables
+      baseStyle = {
+        stroke: '#8b5cf6', // Purple for relationships (different from the indigo used for tables)
+        strokeWidth: 2,
+      };
+    } else if (this.isGreyedOut) {
+      baseStyle = {
+        stroke: '#9ca3af', // Darker grey for greyed out state to improve visibility
+        strokeWidth: 0.75, // Thinner line for greyed out relationships
+      };
+    } else {
+      baseStyle = {
+        stroke: '#0ea5e9', // Sky blue for regular relationships - colorful default
+        strokeWidth: 1,
+      };
+    }
 
     // Use dotted lines for non-identifying relationships, solid for identifying
     if (this.isIdentifying) {

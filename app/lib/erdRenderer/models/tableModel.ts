@@ -10,7 +10,7 @@ export interface Dimensions {
   height: number;
 }
 
-export interface TableBounds extends Position, Dimensions {}
+export interface TableBounds extends Position, Dimensions { }
 
 export class TableModel {
   public id: string;
@@ -21,6 +21,7 @@ export class TableModel {
   public dimensions: Dimensions;
   public isSelected: boolean = false;
   public isDragging: boolean = false;
+  public isGreyedOut: boolean = false;
 
   constructor(table: Table, position: Position = { x: 0, y: 0 }) {
     this.id = table.id;
@@ -68,6 +69,10 @@ export class TableModel {
 
   public setDragging(dragging: boolean): void {
     this.isDragging = dragging;
+  }
+
+  public setGreyedOut(greyedOut: boolean): void {
+    this.isGreyedOut = greyedOut;
   }
 
   // Check if a point is within the table bounds

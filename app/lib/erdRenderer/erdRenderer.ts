@@ -392,23 +392,29 @@ export class ERDRenderer {
       // Show all tables and relationships
       this.tableComponents.forEach(component => {
         component.setSelected(false);
+        component.setGreyedOut(false);
       });
       this.relationshipComponents.forEach(component => {
         component.setVisible(true);
+        component.setGreyedOut(false);
       });
     } else {
-      // Show only selected tables and their relationships
+      // When tables are selected, grey out unrelated tables and relationships
       this.tableComponents.forEach((component, id) => {
         const isSelected = this.selectedTables.has(id);
         component.setSelected(isSelected);
+        component.setGreyedOut(!isSelected); // Grey out non-selected tables
       });
 
       this.relationshipComponents.forEach(component => {
         const model = component.getModel();
-        const isVisible =
+        const isRelated =
           this.selectedTables.has(model.fromTable) ||
           this.selectedTables.has(model.toTable);
-        component.setVisible(isVisible);
+
+        // Always keep relationships visible but grey out unrelated ones
+        component.setVisible(true);
+        component.setGreyedOut(!isRelated);
       });
     }
 
