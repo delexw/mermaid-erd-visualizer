@@ -23,7 +23,7 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
 
       try {
         const text = await file.text();
-        const parseResult = parseMermaidERD(text);
+        const parseResult = await parseMermaidERD(text);
 
         if (!parseResult.success) {
           onError(parseResult.errors);

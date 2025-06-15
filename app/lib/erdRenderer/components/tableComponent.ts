@@ -71,7 +71,6 @@ export class TableComponent {
       headerStyle = '#e5e7eb'; // Slightly darker grey header for greyed out
       textColor = '#6b7280'; // Darker grey text for greyed out to improve visibility
     } else {
-      console.log('default table');
       backgroundColor = '#ffffff'; // Regular white bg
       borderStyle = '1px solid #38bdf8'; // Sky blue border for default tables
       headerStyle = '#bae6fd'; // Light sky blue header background for default tables

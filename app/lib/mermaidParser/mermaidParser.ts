@@ -1,28 +1,15 @@
 import type { ParsedERD, ParseError, ParseResult } from '~/types/erd';
 
-import { MermaidERDParser, type IDiagramParser } from './diagramParser';
 import { ERDValidator } from './erdValidator';
-import { FieldParser } from './fieldParser';
-import { RelationshipAnalyzer } from './relationshipAnalyzer';
-import { RelationshipParser } from './relationshipParser';
-import { TableParser } from './tableParser';
+import { parseMermaidERDWithJS } from './mermaidJsParser';
 
-// Factory function to create the parser with all dependencies
-export const createMermaidERDParser = (): IDiagramParser => {
-  const fieldParser = new FieldParser();
-  const tableParser = new TableParser(fieldParser);
-  const relationshipAnalyzer = new RelationshipAnalyzer();
-  const relationshipParser = new RelationshipParser(relationshipAnalyzer);
-  const validator = new ERDValidator();
-
-  return new MermaidERDParser(tableParser, relationshipParser, validator);
-};
-
-// Main parser function - maintains backward compatibility
-export const parseMermaidERD = (diagramText: string): ParseResult => {
-  const parser = createMermaidERDParser();
-  return parser.parse(diagramText);
-};
+/**
+ * Parses Mermaid ERD diagram text and returns the parsed data.
+ * Uses the Mermaid.js API for parsing.
+ */
+export async function parseMermaidERD(diagramText: string): Promise<ParseResult> {
+  return await parseMermaidERDWithJS(diagramText);
+}
 
 // Update validateParsedERD to return warnings instead of errors
 export const validateParsedERD = (data: ParsedERD): ParseError[] => {
