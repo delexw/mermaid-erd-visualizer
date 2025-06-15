@@ -50,7 +50,7 @@ export default function Sidebar({
         });
       }
     }
-  }, [selectedTable, isOpen, activeTab]);
+  }, [selectedTable, activeTab]);
 
   // Clear refs when tables change
   useEffect(() => {
@@ -101,8 +101,8 @@ export default function Sidebar({
       <div
         className={`
         fixed md:relative
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        ${isOpen ? 'w-80' : 'w-0 md:w-80'}
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isOpen ? 'w-80' : 'w-0'}
         h-full z-50 md:z-10
         transition-all duration-300 ease-in-out
         bg-white border-r border-secondary-200
@@ -116,7 +116,7 @@ export default function Sidebar({
             <h2 className="text-lg font-semibold text-secondary-900">Database Explorer</h2>
             <button
               onClick={onClose}
-              className="md:hidden p-1 rounded-md hover:bg-secondary-100 transition-colors focus-ring"
+              className="p-1 rounded-md hover:bg-secondary-100 transition-colors focus-ring"
               aria-label="Close sidebar"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,8 +159,8 @@ export default function Sidebar({
             <button
               onClick={() => handleTabChange('tables')}
               className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors ${activeTab === 'tables'
-                  ? 'bg-white text-primary-700 shadow-sm'
-                  : 'text-secondary-600 hover:text-secondary-900'
+                ? 'bg-white text-primary-700 shadow-sm'
+                : 'text-secondary-600 hover:text-secondary-900'
                 }`}
             >
               Tables ({filteredTables.length})
@@ -168,8 +168,8 @@ export default function Sidebar({
             <button
               onClick={() => handleTabChange('relationships')}
               className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors ${activeTab === 'relationships'
-                  ? 'bg-white text-primary-700 shadow-sm'
-                  : 'text-secondary-600 hover:text-secondary-900'
+                ? 'bg-white text-primary-700 shadow-sm'
+                : 'text-secondary-600 hover:text-secondary-900'
                 }`}
             >
               Relations ({filteredRelationships.length})
@@ -177,10 +177,10 @@ export default function Sidebar({
             <button
               onClick={() => handleTabChange('warnings')}
               className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors relative ${activeTab === 'warnings'
-                  ? 'bg-white text-red-700 shadow-sm'
-                  : filteredWarnings.length > 0
-                    ? 'text-red-600 hover:text-red-700'
-                    : 'text-secondary-600 hover:text-secondary-900'
+                ? 'bg-white text-red-700 shadow-sm'
+                : filteredWarnings.length > 0
+                  ? 'text-red-600 hover:text-red-700'
+                  : 'text-secondary-600 hover:text-secondary-900'
                 }`}
             >
               <span className="flex items-center justify-center">
@@ -215,8 +215,8 @@ export default function Sidebar({
                       }}
                       onClick={() => handleTableClick(table.id)}
                       className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${isSelected
-                          ? 'bg-primary-50 border-primary-200 text-primary-900'
-                          : 'bg-white border-secondary-200 hover:bg-secondary-50 hover:border-secondary-300'
+                        ? 'bg-primary-50 border-primary-200 text-primary-900'
+                        : 'bg-white border-secondary-200 hover:bg-secondary-50 hover:border-secondary-300'
                         }`}
                     >
                       <div className="font-medium text-sm break-words">{table.name}</div>
@@ -335,8 +335,8 @@ export default function Sidebar({
                   key={relationship.id}
                   onClick={() => handleRelationshipClick(relationship.id)}
                   className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${selectedRelationship === relationship.id
-                      ? 'bg-primary-50 border-primary-200 text-primary-900'
-                      : 'bg-white border-secondary-200 hover:bg-secondary-50 hover:border-secondary-300'
+                    ? 'bg-primary-50 border-primary-200 text-primary-900'
+                    : 'bg-white border-secondary-200 hover:bg-secondary-50 hover:border-secondary-300'
                     }`}
                 >
                   <div className="font-medium text-sm">
