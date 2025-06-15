@@ -92,9 +92,8 @@ export default function Sidebar({
     <>
       {/* Mobile Overlay - CSS-driven */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         onClick={onClose}
       />
 
@@ -159,33 +158,30 @@ export default function Sidebar({
           <div className="flex mt-4 bg-secondary-100 rounded-lg p-1">
             <button
               onClick={() => handleTabChange('tables')}
-              className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors ${
-                activeTab === 'tables'
+              className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors ${activeTab === 'tables'
                   ? 'bg-white text-primary-700 shadow-sm'
                   : 'text-secondary-600 hover:text-secondary-900'
-              }`}
+                }`}
             >
               Tables ({filteredTables.length})
             </button>
             <button
               onClick={() => handleTabChange('relationships')}
-              className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors ${
-                activeTab === 'relationships'
+              className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors ${activeTab === 'relationships'
                   ? 'bg-white text-primary-700 shadow-sm'
                   : 'text-secondary-600 hover:text-secondary-900'
-              }`}
+                }`}
             >
               Relations ({filteredRelationships.length})
             </button>
             <button
               onClick={() => handleTabChange('warnings')}
-              className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors relative ${
-                activeTab === 'warnings'
+              className={`flex-1 py-2 px-2 rounded-md text-xs font-medium transition-colors relative ${activeTab === 'warnings'
                   ? 'bg-white text-red-700 shadow-sm'
                   : filteredWarnings.length > 0
                     ? 'text-red-600 hover:text-red-700'
                     : 'text-secondary-600 hover:text-secondary-900'
-              }`}
+                }`}
             >
               <span className="flex items-center justify-center">
                 Warnings ({filteredWarnings.length})
@@ -218,11 +214,10 @@ export default function Sidebar({
                         }
                       }}
                       onClick={() => handleTableClick(table.id)}
-                      className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${
-                        isSelected
+                      className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${isSelected
                           ? 'bg-primary-50 border-primary-200 text-primary-900'
                           : 'bg-white border-secondary-200 hover:bg-secondary-50 hover:border-secondary-300'
-                      }`}
+                        }`}
                     >
                       <div className="font-medium text-sm break-words">{table.name}</div>
                       <div className="text-xs text-secondary-500 mt-1">
@@ -339,11 +334,10 @@ export default function Sidebar({
                 <button
                   key={relationship.id}
                   onClick={() => handleRelationshipClick(relationship.id)}
-                  className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${
-                    selectedRelationship === relationship.id
+                  className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${selectedRelationship === relationship.id
                       ? 'bg-primary-50 border-primary-200 text-primary-900'
                       : 'bg-white border-secondary-200 hover:bg-secondary-50 hover:border-secondary-300'
-                  }`}
+                    }`}
                 >
                   <div className="font-medium text-sm">
                     {relationship.fromTable} → {relationship.toTable}
