@@ -14,11 +14,6 @@ export class FieldParser implements IFieldParser {
     const cleanLine = line.trim();
     if (!cleanLine || cleanLine.startsWith('//')) return null;
 
-    // Handle model_path specially
-    if (cleanLine.includes('model_path')) {
-      return null; // Skip model path lines
-    }
-
     // Parse field definition: type name [annotations]
     const parts = cleanLine.split(/\s+/);
     if (parts.length < 2) return null;
@@ -28,18 +23,18 @@ export class FieldParser implements IFieldParser {
 
     // Check for annotations
     const restOfLine = parts.slice(2).join(' ');
-    
+
     // Parse PK annotations: simple "PK" (standalone) or quoted "PK"
-    const simplePkMatch = restOfLine.match(/\bPK\b/);
-    const quotedPkMatch = restOfLine.match(/["']PK["']/);
+    const simplePkMatch = restOfLine.match(/\bPK\b/i);
+    const quotedPkMatch = restOfLine.match(/["']PK["']/i);
     const isPrimaryKey = !!(simplePkMatch || quotedPkMatch);
-    
+
     let isForeignKey = false;
     let foreignKeyTarget = '';
 
     // Parse FK annotations: simple "FK" (standalone) or quoted "FK"
-    const simpleFkMatch = restOfLine.match(/\bFK\b/);
-    const quotedFkMatch = restOfLine.match(/["']FK["']/);
+    const simpleFkMatch = restOfLine.match(/\bFK\b/i);
+    const quotedFkMatch = restOfLine.match(/["']FK["']/i);
 
     if (simpleFkMatch || quotedFkMatch) {
       // Handle FK annotation

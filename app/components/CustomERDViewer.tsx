@@ -11,6 +11,7 @@ import type {
 } from '../lib/erdRenderer/types/layout';
 
 import { LayoutControls } from './LayoutControls';
+import { LoadingOverlay } from './LoadingOverlay';
 
 interface CustomERDViewerProps {
   selectedTable: string | null;
@@ -24,6 +25,8 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
   const [showRelationships, setShowRelationships] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingStage, setLoadingStage] = useState('');
   const [showLayoutControls, setShowLayoutControls] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
 
@@ -44,6 +47,10 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
       onTableSelect: onTableSelect,
       onLayoutChange: () => {
         // Handle layout changes if needed
+      },
+      onRenderingProgress: (progress, stage) => {
+        setLoadingProgress(progress);
+        setLoadingStage(stage);
       },
       showLegend: true,
       legendConfig: {
@@ -72,21 +79,33 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
     }
   }, [onTableSelect]);
 
+  // Handle loading completion
+  const handleLoadingComplete = () => {
+    setIsLoading(false);
+    setDataLoaded(true);
+    setLoadingProgress(0);
+    setLoadingStage('');
+  };
+
   // Load data when tables/relationships change
   useEffect(() => {
     if (rendererRef.current && tables.length > 0) {
       setIsLoading(true);
       setDataLoaded(false);
+      setLoadingProgress(0);
+      setLoadingStage('Preparing...');
+
       rendererRef.current
         .loadData(tables, relationships)
         .then(() => {
-          setIsLoading(false);
-          setDataLoaded(true);
+          // Loading will complete via the LoadingOverlay when progress reaches 100%
         })
         .catch((error: Error) => {
           console.error('Error loading ERD data:', error);
           setIsLoading(false);
           setDataLoaded(false);
+          setLoadingProgress(0);
+          setLoadingStage('');
         });
     } else {
       setDataLoaded(false);
@@ -134,15 +153,19 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
 
     setIsLoading(true);
     setDataLoaded(false);
+    setLoadingProgress(0);
+    setLoadingStage('Updating layout...');
+
     try {
       await rendererRef.current.updateLayoutConfig(config);
       await rendererRef.current.loadData(tables, relationships);
-      setDataLoaded(true);
+      // Loading will complete via the LoadingOverlay when progress reaches 100%
     } catch (error) {
       console.error('Error updating layout:', error);
-      setDataLoaded(false);
-    } finally {
       setIsLoading(false);
+      setDataLoaded(false);
+      setLoadingProgress(0);
+      setLoadingStage('');
     }
   };
 
@@ -166,14 +189,12 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
   return (
     <div className="custom-erd-viewer-container relative flex-1">
       {/* Loading Overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-20 rounded-lg">
-          <div className="flex items-center gap-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span className="text-blue-600 font-medium">Computing optimal layout...</span>
-          </div>
-        </div>
-      )}
+      <LoadingOverlay
+        isLoading={isLoading}
+        progress={loadingProgress}
+        stage={loadingStage}
+        onLoadingComplete={handleLoadingComplete}
+      />
 
       {/* Controls */}
       <div className="absolute top-4 right-4 z-10 bg-white rounded-lg shadow-lg border border-secondary-200 p-2">
@@ -182,11 +203,10 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={() => setShowLayoutControls(!showLayoutControls)}
             disabled={isLoading}
-            className={`p-2 rounded-md transition-colors focus-ring ${
-              showLayoutControls
-                ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`p-2 rounded-md transition-colors focus-ring ${showLayoutControls
+              ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+              : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title="Layout options"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,11 +223,10 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={handleToggleRelationships}
             disabled={isLoading}
-            className={`p-2 rounded-md transition-colors focus-ring ${
-              showRelationships
-                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`p-2 rounded-md transition-colors focus-ring ${showRelationships
+              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={showRelationships ? 'Hide relationships' : 'Show relationships'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,11 +279,10 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={handleToggleLegend}
             disabled={isLoading}
-            className={`p-2 rounded-md transition-colors focus-ring ${
-              showLegend
-                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`p-2 rounded-md transition-colors focus-ring ${showLegend
+              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+              : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={showLegend ? 'Hide legend' : 'Show legend'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

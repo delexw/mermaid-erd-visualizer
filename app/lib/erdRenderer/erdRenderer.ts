@@ -21,6 +21,7 @@ export interface ERDRendererConfig {
   container: HTMLElement;
   onTableSelect?: (tableId: string | null) => void;
   onLayoutChange?: () => void;
+  onRenderingProgress?: (progress: number, stage: string) => void;
   layoutConfig?: Partial<LayoutConfig>;
   showLegend?: boolean;
   legendConfig?: LegendConfig;
@@ -167,8 +168,18 @@ export class ERDRenderer {
   public async loadData(tables: Table[], relationships: Relationship[]): Promise<void> {
     this.clear();
 
+    // Report starting layout calculation
+    this.config.onRenderingProgress?.(5, 'Analyzing table structure...');
+
     // Use GraphLayoutEngine to calculate optimal positions
     const positions = await this.layoutEngine.calculateLayout(tables, relationships);
+
+    // Report layout calculation complete
+    this.config.onRenderingProgress?.(30, 'Calculating optimal positions...');
+
+    // Track progress through table creation
+    const totalItems = tables.length + relationships.length;
+    let processedItems = 0;
 
     tables.forEach((table, index) => {
       const model = new TableModel(table, positions[index]);
@@ -182,21 +193,38 @@ export class ERDRenderer {
       });
 
       this.tableComponents.set(table.id, component);
+
+      // Report progress after each table
+      processedItems++;
+      const progress = 30 + Math.floor((processedItems / totalItems) * 50);
+      this.config.onRenderingProgress?.(progress, 'Positioning tables...');
     });
+
+    // Report starting relationship creation
+    this.config.onRenderingProgress?.(80, 'Positioning relationships...');
+
     // Create relationship models and components
-    relationships.forEach(relationship => {
+    relationships.forEach((relationship, idx) => {
       const model = new RelationshipModel(relationship);
       this.relationshipModels.set(relationship.id, model);
 
       const component = new RelationshipComponent(this.mainGroup, model);
       this.relationshipComponents.set(relationship.id, component);
+
+      // Report progress after each relationship
+      processedItems++;
+      const progress = 80 + Math.floor(((idx + 1) / relationships.length) * 15);
+      this.config.onRenderingProgress?.(progress, 'Positioning relationships...');
     });
 
     // Wait for next frame to ensure table components are fully rendered
     await new Promise(resolve => requestAnimationFrame(resolve));
 
     this.updateRelationshipPositions();
+    this.config.onRenderingProgress?.(95, 'Finalizing layout...');
+
     this.fitToScreen();
+    this.config.onRenderingProgress?.(100, 'Complete');
   }
 
   private updateRelationshipHighlighting(): void {
@@ -497,7 +525,7 @@ export class ERDRenderer {
     }
 
     this.updateRelationshipHighlighting();
-    
+
     // Bring selected tables and their relationships to the front
     this.bringSelectedElementsToFront();
   }
@@ -508,15 +536,15 @@ export class ERDRenderer {
       this.restoreOriginalRenderOrder();
       return;
     }
-    
+
     // First, collect all elements that should be moved to front
     const selectedTableIds = Array.from(this.selectedTables);
     const relatedRelationshipIds: string[] = [];
-    
+
     // Find relationships connected to selected tables
     this.relationshipModels.forEach((model, id) => {
       if (
-        this.selectedTables.has(model.fromTable) || 
+        this.selectedTables.has(model.fromTable) ||
         this.selectedTables.has(model.toTable)
       ) {
         relatedRelationshipIds.push(id);
@@ -539,7 +567,7 @@ export class ERDRenderer {
       }
     });
   }
-  
+
   // Restore the original rendering order: relationships in back, tables in front
   private restoreOriginalRenderOrder(): void {
     // Then place all tables on top
