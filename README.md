@@ -12,7 +12,6 @@ _Interactive ERD visualization showing database schema with tables, relationship
 - **Interactive Visualization**: Pan, zoom, and explore your database schemas
 - **Mermaid Parser**: Comprehensive parsing and validation of Mermaid ERD syntax
 
-
 ## Development
 
 Run the dev server:

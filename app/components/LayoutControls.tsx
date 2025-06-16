@@ -96,12 +96,13 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
                   key={value}
                   onClick={() => handleChangeLayoutAlgorithm(value)}
                   disabled={isLoading}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${currentLayout.algorithm === value
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : isLoading
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'bg-white hover:bg-blue-100 border border-blue-200'
-                    }`}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    currentLayout.algorithm === value
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : isLoading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'bg-white hover:bg-blue-100 border border-blue-200'
+                  }`}
                 >
                   {value}
                 </button>
@@ -115,12 +116,13 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
                     key={value}
                     onClick={() => handleChangeLayoutAlgorithm(value)}
                     disabled={isLoading}
-                    className={`px-2 py-1 text-xs rounded transition-colors ${currentLayout.algorithm === value
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : isLoading
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'bg-white hover:bg-blue-100 border border-blue-200'
-                      }`}
+                    className={`px-2 py-1 text-xs rounded transition-colors ${
+                      currentLayout.algorithm === value
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : isLoading
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'bg-white hover:bg-blue-100 border border-blue-200'
+                    }`}
                   >
                     {value}
                   </button>
@@ -141,12 +143,13 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
                   key={value}
                   onClick={() => handleChangeLayoutDirection(value)}
                   disabled={isLoading}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${currentLayout.direction === value
-                    ? 'bg-green-600 text-white shadow-md'
-                    : isLoading
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'bg-white hover:bg-green-100 border border-green-200'
-                    }`}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    currentLayout.direction === value
+                      ? 'bg-green-600 text-white shadow-md'
+                      : isLoading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'bg-white hover:bg-green-100 border border-green-200'
+                  }`}
                 >
                   {value}
                 </button>
@@ -169,12 +172,13 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
                   key={value}
                   onClick={() => handleChangeHierarchyHandling(value)}
                   disabled={isLoading}
-                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${currentLayout.hierarchyHandling === value
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : isLoading
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'bg-white hover:bg-purple-100 border border-purple-200'
-                    }`}
+                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${
+                    currentLayout.hierarchyHandling === value
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : isLoading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'bg-white hover:bg-purple-100 border border-purple-200'
+                  }`}
                 >
                   {value.replace('_', ' ')}
                 </button>
@@ -194,12 +198,13 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
                   key={value}
                   onClick={() => handleChangeNodePlacement(value)}
                   disabled={isLoading}
-                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${currentLayout.nodePlacement === value
-                    ? 'bg-orange-600 text-white shadow-md'
-                    : isLoading
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'bg-white hover:bg-orange-100 border border-orange-200'
-                    }`}
+                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${
+                    currentLayout.nodePlacement === value
+                      ? 'bg-orange-600 text-white shadow-md'
+                      : isLoading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'bg-white hover:bg-orange-100 border border-orange-200'
+                  }`}
                 >
                   {value.replace('_', ' ')}
                 </button>
