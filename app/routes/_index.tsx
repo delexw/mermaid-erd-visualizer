@@ -1,5 +1,5 @@
 import type { MetaFunction } from '@remix-run/node';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import CustomERDViewer from '~/components/CustomERDViewer';
 import Header from '~/components/Header';
@@ -33,42 +33,65 @@ export default function Index() {
 
   const { loadData, clearData, hasData, uploadedFileName } = useERD();
 
-  const handleTableSelect = (tableId: string | null) => {
+  const handleTableSelect = useCallback((tableId: string | null) => {
     // Toggle behavior: if same table is clicked, deselect it
     setSelectedTable(prev => (prev === tableId ? null : tableId));
     // Clear relationship selection when table is selected
-    if (selectedTable !== tableId) {
-      setSelectedRelationship(null);
-    }
+    setSelectedRelationship(prev => (prev !== null && tableId !== null ? null : prev));
 
     // Open sidebar when a table is selected from the diagram
-    if (tableId !== null && !sidebarOpen) {
+    if (tableId !== null) {
       setSidebarOpen(true);
     }
-  };
+  }, []);
 
-  const handleDataParsed = (data: ParsedERD) => {
-    loadData(data, uploadedFileName || 'uploaded file');
-    setParseSuccess(data);
-    setParseErrors([]);
-    setUploadDialogOpen(false); // Close dialog on successful upload
-    // Clear selections when new data is loaded
-    setSelectedTable(null);
-    setSelectedRelationship(null);
-  };
+  const handleDataParsed = useCallback(
+    (data: ParsedERD) => {
+      loadData(data, uploadedFileName || 'uploaded file');
+      setParseSuccess(data);
+      setParseErrors([]);
+      setUploadDialogOpen(false); // Close dialog on successful upload
+      // Clear selections when new data is loaded
+      setSelectedTable(null);
+      setSelectedRelationship(null);
+    },
+    [loadData, uploadedFileName]
+  );
 
-  const handleParseError = (errors: ParseError[]) => {
+  const handleParseError = useCallback((errors: ParseError[]) => {
     setParseErrors(errors);
     setParseSuccess(null);
-  };
+  }, []);
 
-  const handleClearData = () => {
+  const handleClearData = useCallback(() => {
     clearData();
     setParseSuccess(null);
     setParseErrors([]);
     setSelectedTable(null);
     setSelectedRelationship(null);
-  };
+  }, [clearData]);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
+
+  const closeSidebar = useCallback(() => {
+    setSidebarOpen(false);
+  }, []);
+
+  const toggleUploadDialog = useCallback(() => {
+    setUploadDialogOpen(prev => !prev);
+  }, []);
+
+  const dismissParseErrors = useCallback(() => {
+    setParseErrors([]);
+  }, []);
+
+  const dismissParseSuccess = useCallback(() => {
+    setParseSuccess(null);
+  }, []);
+
+  // Using setSelectedRelationship directly as it doesn't need any additional logic
 
   return (
     <div className="main-layout">
@@ -78,10 +101,10 @@ export default function Index() {
         onTableSelect={handleTableSelect}
         onRelationshipSelect={setSelectedRelationship}
         isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+        onClose={closeSidebar}
       />
       <div className="diagram-content responsive-height">
-        <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        <Header onToggleSidebar={toggleSidebar} />
 
         {hasData ? (
           /* When diagram is loaded: minimal status bar + maximized viewer */
@@ -109,7 +132,7 @@ export default function Index() {
 
                 <div className="flex items-center space-x-3">
                   <button
-                    onClick={() => setUploadDialogOpen(true)}
+                    onClick={toggleUploadDialog}
                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   >
                     <svg
@@ -169,16 +192,13 @@ export default function Index() {
 
               {parseErrors.length > 0 && (
                 <div className="mt-6">
-                  <ParseErrorDisplay errors={parseErrors} onDismiss={() => setParseErrors([])} />
+                  <ParseErrorDisplay errors={parseErrors} onDismiss={dismissParseErrors} />
                 </div>
               )}
 
               {parseSuccess && (
                 <div className="mt-6">
-                  <ParseSuccessDisplay
-                    data={parseSuccess}
-                    onDismiss={() => setParseSuccess(null)}
-                  />
+                  <ParseSuccessDisplay data={parseSuccess} onDismiss={dismissParseSuccess} />
                 </div>
               )}
             </div>
@@ -192,7 +212,7 @@ export default function Index() {
               <div className="flex items-center justify-between p-6 border-b border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900">Upload New ERD Diagram</h3>
                 <button
-                  onClick={() => setUploadDialogOpen(false)}
+                  onClick={toggleUploadDialog}
                   className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md p-1"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,16 +231,13 @@ export default function Index() {
 
                 {parseErrors.length > 0 && (
                   <div className="mt-4">
-                    <ParseErrorDisplay errors={parseErrors} onDismiss={() => setParseErrors([])} />
+                    <ParseErrorDisplay errors={parseErrors} onDismiss={dismissParseErrors} />
                   </div>
                 )}
 
                 {parseSuccess && (
                   <div className="mt-4">
-                    <ParseSuccessDisplay
-                      data={parseSuccess}
-                      onDismiss={() => setParseSuccess(null)}
-                    />
+                    <ParseSuccessDisplay data={parseSuccess} onDismiss={dismissParseSuccess} />
                   </div>
                 )}
               </div>

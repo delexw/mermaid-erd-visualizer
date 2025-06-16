@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 import { useERD } from '~/contexts/ERDContext';
+import type { Relationship, Table } from '~/types/erd.js';
 
 import { ERDRenderer, type ERDRendererConfig } from '../lib/erdRenderer/erdRenderer.js';
 import type {
@@ -18,25 +19,26 @@ interface CustomERDViewerProps {
   onTableSelect: (tableId: string | null) => void;
 }
 
-export default function CustomERDViewer({ selectedTable, onTableSelect }: CustomERDViewerProps) {
-  const { tables, relationships } = useERD();
+// Custom hook to manage the ERD renderer
+function useERDRenderer(
+  onTableSelect: (tableId: string | null) => void,
+  tables: Table[],
+  relationships: Relationship[]
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<ERDRenderer | null>(null);
-  const [showRelationships, setShowRelationships] = useState(true);
-  const [showLegend, setShowLegend] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStage, setLoadingStage] = useState('');
-  const [showLayoutControls, setShowLayoutControls] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Initialize renderer
+  // Create renderer instance
   useEffect(() => {
     if (!containerRef.current) return;
 
     const config: ERDRendererConfig = {
       container: containerRef.current,
-      onTableSelect: onTableSelect,
+      onTableSelect,
       onLayoutChange: () => {
         // Handle layout changes if needed
       },
@@ -51,30 +53,13 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
     };
 
     rendererRef.current = new ERDRenderer(config);
-
     console.log('Created ERDRenderer');
 
     return () => {
       rendererRef.current?.destroy();
       rendererRef.current = null;
     };
-  }, []); // Removed onTableSelect from dependencies
-
-  // Update renderer callback when onTableSelect changes
-  useEffect(() => {
-    if (rendererRef.current) {
-      // Update the callback without recreating the renderer
-      rendererRef.current.config.onTableSelect = onTableSelect;
-    }
-  }, [onTableSelect]);
-
-  // Handle loading completion
-  const handleLoadingComplete = () => {
-    setIsLoading(false);
-    setDataLoaded(true);
-    setLoadingProgress(0);
-    setLoadingStage('');
-  };
+  }, [onTableSelect]); // Include onTableSelect properly
 
   // Load data when tables/relationships change
   useEffect(() => {
@@ -84,85 +69,137 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
       setLoadingProgress(0);
       setLoadingStage('Preparing...');
 
-      rendererRef.current
-        .loadData(tables, relationships)
-        .then(() => {
-          // Loading will complete via the LoadingOverlay when progress reaches 100%
-        })
-        .catch((error: Error) => {
-          console.error('Error loading ERD data:', error);
-          setIsLoading(false);
-          setDataLoaded(false);
-          setLoadingProgress(0);
-          setLoadingStage('');
-        });
+      rendererRef.current.loadData(tables, relationships).catch((error: Error) => {
+        console.error('Error loading ERD data:', error);
+        setIsLoading(false);
+        setDataLoaded(false);
+        setLoadingProgress(0);
+        setLoadingStage('');
+      });
     } else {
       setDataLoaded(false);
     }
   }, [tables, relationships]);
 
+  const handleLoadingComplete = useCallback(() => {
+    setIsLoading(false);
+    setDataLoaded(true);
+    setLoadingProgress(0);
+    setLoadingStage('');
+  }, []);
+
+  return {
+    containerRef,
+    renderer: rendererRef.current,
+    isLoading,
+    loadingProgress,
+    loadingStage,
+    dataLoaded,
+    setIsLoading,
+    setDataLoaded,
+    setLoadingProgress,
+    setLoadingStage,
+    handleLoadingComplete,
+  };
+}
+
+export default function CustomERDViewer({ selectedTable, onTableSelect }: CustomERDViewerProps) {
+  const { tables, relationships } = useERD();
+  const [showRelationships, setShowRelationships] = useState(true);
+  const [showLegend, setShowLegend] = useState(true);
+  const [showLayoutControls, setShowLayoutControls] = useState(false);
+
+  // Use our custom hook
+  const {
+    containerRef,
+    renderer,
+    isLoading,
+    loadingProgress,
+    loadingStage,
+    dataLoaded,
+    setIsLoading,
+    setDataLoaded,
+    setLoadingProgress,
+    setLoadingStage,
+    handleLoadingComplete,
+  } = useERDRenderer(onTableSelect, tables, relationships);
+
   // Handle table selection from external source
   useEffect(() => {
-    if (rendererRef.current && dataLoaded) {
+    if (renderer && dataLoaded) {
       // Update renderer selection state to match external selection
-      rendererRef.current.selectTable(selectedTable);
+      renderer.selectTable(selectedTable);
 
       // If a table is selected, also focus on it
       if (selectedTable) {
-        rendererRef.current.focusOnTable(selectedTable);
+        renderer.focusOnTable(selectedTable);
       }
     }
-  }, [selectedTable, dataLoaded]);
+  }, [selectedTable, dataLoaded, renderer]);
 
-  // Handle relationship visibility toggle
-  const handleToggleRelationships = () => {
-    const newVisibility = !showRelationships;
-    setShowRelationships(newVisibility);
-    rendererRef.current?.toggleRelationshipVisibility(newVisibility);
-  };
+  // Memoize handlers
+  const handleToggleRelationships = useCallback(() => {
+    setShowRelationships(prev => {
+      const newVisibility = !prev;
+      renderer?.toggleRelationshipVisibility(newVisibility);
+      return newVisibility;
+    });
+  }, [renderer]);
 
-  const handleFitToScreen = () => {
-    rendererRef.current?.fitToScreen();
-  };
+  const handleFitToScreen = useCallback(() => {
+    renderer?.fitToScreen();
+  }, [renderer]);
 
-  const handleFocusOnSelected = () => {
-    const currentSelected = rendererRef.current?.getSelectedTables()?.[0];
+  const handleFocusOnSelected = useCallback(() => {
+    const currentSelected = renderer?.getSelectedTables()?.[0];
     if (currentSelected) {
-      rendererRef.current?.focusOnTable(currentSelected);
+      renderer?.focusOnTable(currentSelected);
     }
-  };
+  }, [renderer]);
 
-  const handleLayoutChange = async (config: {
-    algorithm?: LayoutAlgorithm;
-    direction?: LayoutDirection;
-    hierarchyHandling?: HierarchyHandling;
-    nodePlacement?: NodePlacement;
-  }) => {
-    if (!rendererRef.current) return;
+  const handleToggleLegend = useCallback(() => {
+    setShowLegend(prev => {
+      const newVisibility = !prev;
+      renderer?.toggleLegend();
+      return newVisibility;
+    });
+  }, [renderer]);
 
-    setIsLoading(true);
-    setDataLoaded(false);
-    setLoadingProgress(0);
-    setLoadingStage('Updating layout...');
+  const handleLayoutChange = useCallback(
+    async (config: {
+      algorithm?: LayoutAlgorithm;
+      direction?: LayoutDirection;
+      hierarchyHandling?: HierarchyHandling;
+      nodePlacement?: NodePlacement;
+    }) => {
+      if (!renderer) return;
 
-    try {
-      await rendererRef.current.updateLayoutConfig(config);
-      await rendererRef.current.loadData(tables, relationships);
-      // Loading will complete via the LoadingOverlay when progress reaches 100%
-    } catch (error) {
-      console.error('Error updating layout:', error);
-      setIsLoading(false);
+      setIsLoading(true);
       setDataLoaded(false);
       setLoadingProgress(0);
-      setLoadingStage('');
-    }
-  };
+      setLoadingStage('Updating layout...');
 
-  const handleToggleLegend = () => {
-    const newVisibility = !showLegend;
-    setShowLegend(newVisibility);
-    rendererRef.current?.toggleLegend();
-  };
+      try {
+        await renderer.updateLayoutConfig(config);
+        await renderer.loadData(tables, relationships);
+      } catch (error) {
+        console.error('Error updating layout:', error);
+        setIsLoading(false);
+        setDataLoaded(false);
+        setLoadingProgress(0);
+        setLoadingStage('');
+      }
+    },
+    [
+      renderer,
+      tables,
+      relationships,
+      setIsLoading,
+      setDataLoaded,
+      setLoadingProgress,
+      setLoadingStage,
+    ]
+  );
 
   if (tables.length === 0) {
     return (
