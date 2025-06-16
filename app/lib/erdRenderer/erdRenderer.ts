@@ -4,8 +4,6 @@ import { zoom, zoomTransform, type ZoomBehavior } from 'd3-zoom';
 import 'd3-transition';
 import type { Table, Relationship } from '~/types/erd';
 
-import type { LegendConfig } from './components/legendComponent';
-import { LegendComponent } from './components/legendComponent';
 import { RelationshipComponent } from './components/relationshipComponent';
 import { TableComponent } from './components/tableComponent';
 import { GraphLayoutEngine, type LayoutConfig } from './models/graphLayoutEngine';
@@ -24,7 +22,6 @@ export interface ERDRendererConfig {
   onLayoutChange?: () => void;
   onRenderingProgress?: (progress: number, stage: string) => void;
   layoutConfig?: Partial<LayoutConfig>;
-  legendConfig?: LegendConfig;
 }
 
 export interface ERDData {
@@ -52,7 +49,6 @@ export class ERDRenderer {
   private svg!: Selection<SVGSVGElement, unknown, null, undefined>;
   private mainGroup!: Selection<SVGGElement, unknown, null, undefined>;
   private zoomBehavior!: ZoomBehavior<SVGSVGElement, unknown>;
-  private legendComponent?: LegendComponent;
 
   private tableModels: Map<string, TableModel> = new Map();
   private relationshipModels: Map<string, RelationshipModel> = new Map();
@@ -72,7 +68,6 @@ export class ERDRenderer {
     this.createGridPattern();
     this.setupZoom();
     this.setupResizeObserver();
-    this.setupLegend();
   }
 
   private initializeSVG(): void {
@@ -150,18 +145,6 @@ export class ERDRenderer {
         }
       });
       resizeObserver.observe(this.config.container);
-    }
-  }
-
-  private setupLegend(): void {
-    if (this.config.legendConfig?.show) {
-      // Default to responsive positioning
-      const legendConfig = {
-        responsive: true,
-        position: 'bottom-right' as const,
-        ...this.config.legendConfig,
-      };
-      this.legendComponent = new LegendComponent(this.svg, legendConfig);
     }
   }
 
@@ -345,7 +328,7 @@ export class ERDRenderer {
   public destroy(): void {
     this.tableComponents.forEach(component => component.destroy());
     this.relationshipComponents.forEach(component => component.destroy());
-    this.legendComponent?.destroy();
+
     this.config.container.innerHTML = '';
   }
 
@@ -483,16 +466,8 @@ export class ERDRenderer {
     return this.layoutEngine.getConfig();
   }
 
-  // Legend control methods
-  public toggleLegend(): void {
-    this.legendComponent?.toggle();
-  }
-
-  public setLegendVisible(visible: boolean): void {
-    this.legendComponent?.setVisible(visible);
-  }
-
-  public setLegendPosition(position: LegendConfig['position']): void {
-    this.legendComponent?.setPosition(position);
+  // Return the svg element for positioning external components
+  public getSvg(): SVGSVGElement | null {
+    return this.svg.node();
   }
 }

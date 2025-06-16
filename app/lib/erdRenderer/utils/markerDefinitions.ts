@@ -7,6 +7,30 @@ export interface MarkerConfig {
   prefix?: string;
 }
 
+interface MarkerDefinition {
+  id: string;
+  viewBox: string;
+  refX: number;
+  refY: number;
+  markerWidth: number;
+  markerHeight: number;
+  renderFn: (
+    marker: Selection<SVGMarkerElement, unknown, null, undefined>,
+    color: string,
+    strokeColor: string,
+    highlighted: boolean,
+    greyedOut: boolean
+  ) => void;
+  renderInlineFn: (
+    group: Selection<SVGGElement, unknown, null, undefined>,
+    x: number,
+    y: number,
+    color: string,
+    strokeColor: string,
+    circleSize: number
+  ) => void;
+}
+
 export class MarkerDefinitions {
   private static instance: MarkerDefinitions;
 
@@ -17,49 +41,15 @@ export class MarkerDefinitions {
     return MarkerDefinitions.instance;
   }
 
-  public createAllMarkers(
-    svg: Selection<SVGSVGElement, unknown, null, undefined>,
-    config: MarkerConfig = { size: 'normal' }
-  ): void {
-    // Get or create defs element
-    let defs = svg.select<SVGDefsElement>('defs');
-    if (defs.empty()) {
-      defs = svg.append('defs');
-    }
-
-    const prefix = config.prefix || '';
-    const highlighted = config.highlighted || false;
-    const greyedOut = config.greyedOut || false;
-
-    // Set color based on state
-    let color, strokeColor;
-    if (highlighted) {
-      color = '#8b5cf6'; // Purple for highlighted relationships
-      strokeColor = '#8b5cf6';
-    } else if (greyedOut) {
-      color = '#9ca3af'; // Darker grey for greyed out to improve visibility
-      strokeColor = '#9ca3af';
-    } else {
-      color = '#0ea5e9'; // Sky blue for default state - colorful default
-      strokeColor = '#0ea5e9';
-    }
-
-    // Determine the marker suffix
-    let suffix = '';
-    if (highlighted) {
-      suffix = '-highlighted';
-    } else if (greyedOut) {
-      suffix = '-greyed';
-    }
-
-    // One marker (circle)
-    this.createMarkerIfNotExists(defs, `${prefix}marker-one${suffix}`, {
+  private markerDefs: Record<string, MarkerDefinition> = {
+    one: {
+      id: 'marker-one',
       viewBox: '0 0 12 12',
       refX: 6,
       refY: 6,
       markerWidth: 10,
       markerHeight: 10,
-      content: marker => {
+      renderFn: (marker, _, strokeColor, highlighted, greyedOut) => {
         marker
           .append('circle')
           .attr('cx', 6)
@@ -69,40 +59,56 @@ export class MarkerDefinitions {
           .attr('stroke', strokeColor)
           .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 1.5);
       },
-    });
-
-    // Many marker (arrow)
-    this.createMarkerIfNotExists(defs, `${prefix}marker-many${suffix}`, {
+      renderInlineFn: (group, x, y, _, strokeColor, circleSize) => {
+        group
+          .append('circle')
+          .attr('cx', x)
+          .attr('cy', y)
+          .attr('r', circleSize)
+          .attr('fill', 'none')
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', 1.2);
+      },
+    },
+    many: {
+      id: 'marker-many',
       viewBox: '0 0 12 12',
       refX: 10,
       refY: 6,
       markerWidth: 10,
       markerHeight: 10,
-      content: marker => {
+      renderFn: (marker, color) => {
         marker.append('path').attr('d', 'M2,2 L10,6 L2,10 z').attr('fill', color);
       },
-    });
-
-    // Many start marker
-    this.createMarkerIfNotExists(defs, `${prefix}marker-many-start${suffix}`, {
+      renderInlineFn: (group, x, y, color) => {
+        group
+          .append('path')
+          .attr('d', `M${x - 6},${y - 3} L${x + 3},${y} L${x - 6},${y + 3} z`)
+          .attr('fill', color);
+      },
+    },
+    'many-start': {
+      id: 'marker-many-start',
       viewBox: '0 0 12 12',
       refX: 2,
       refY: 6,
       markerWidth: 10,
       markerHeight: 10,
-      content: marker => {
+      renderFn: (marker, color) => {
         marker.append('path').attr('d', 'M10,2 L2,6 L10,10 z').attr('fill', color);
       },
-    });
-
-    // Zero or one marker (circle + line)
-    this.createMarkerIfNotExists(defs, `${prefix}marker-zero-or-one${suffix}`, {
+      renderInlineFn: () => {
+        // Not used in inline rendering
+      },
+    },
+    'zero-or-one': {
+      id: 'marker-zero-or-one',
       viewBox: '0 0 16 12',
       refX: 14,
       refY: 6,
       markerWidth: 12,
       markerHeight: 10,
-      content: marker => {
+      renderFn: (marker, _, strokeColor, highlighted, greyedOut) => {
         marker
           .append('circle')
           .attr('cx', 4)
@@ -121,16 +127,34 @@ export class MarkerDefinitions {
           .attr('stroke', strokeColor)
           .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 2);
       },
-    });
+      renderInlineFn: (group, x, y, _, strokeColor, circleSize) => {
+        group
+          .append('circle')
+          .attr('cx', x - 4)
+          .attr('cy', y)
+          .attr('r', circleSize)
+          .attr('fill', 'none')
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', 1.2);
 
-    // Zero or one start marker
-    this.createMarkerIfNotExists(defs, `${prefix}marker-zero-or-one-start${suffix}`, {
+        group
+          .append('line')
+          .attr('x1', x + 2)
+          .attr('y1', y - 4)
+          .attr('x2', x + 2)
+          .attr('y2', y + 4)
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', 1.5);
+      },
+    },
+    'zero-or-one-start': {
+      id: 'marker-zero-or-one-start',
       viewBox: '0 0 16 12',
       refX: 2,
       refY: 6,
       markerWidth: 12,
       markerHeight: 10,
-      content: marker => {
+      renderFn: (marker, _, strokeColor, highlighted, greyedOut) => {
         marker
           .append('line')
           .attr('x1', 5)
@@ -149,16 +173,18 @@ export class MarkerDefinitions {
           .attr('stroke', strokeColor)
           .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 1.5);
       },
-    });
-
-    // Zero or more marker (circle + arrow)
-    this.createMarkerIfNotExists(defs, `${prefix}marker-zero-or-more${suffix}`, {
+      renderInlineFn: () => {
+        // Not used in inline rendering
+      },
+    },
+    'zero-or-more': {
+      id: 'marker-zero-or-more',
       viewBox: '0 0 18 12',
       refX: 16,
       refY: 6,
       markerWidth: 14,
       markerHeight: 10,
-      content: marker => {
+      renderFn: (marker, color, strokeColor, highlighted, greyedOut) => {
         marker
           .append('circle')
           .attr('cx', 4)
@@ -170,16 +196,30 @@ export class MarkerDefinitions {
 
         marker.append('path').attr('d', 'M9,2 L16,6 L9,10 z').attr('fill', color);
       },
-    });
+      renderInlineFn: (group, x, y, color, strokeColor, circleSize) => {
+        group
+          .append('circle')
+          .attr('cx', x - 6)
+          .attr('cy', y)
+          .attr('r', circleSize)
+          .attr('fill', 'none')
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', 1.2);
 
-    // Zero or more start marker
-    this.createMarkerIfNotExists(defs, `${prefix}marker-zero-or-more-start${suffix}`, {
+        group
+          .append('path')
+          .attr('d', `M${x - 1},${y - 3} L${x + 6},${y} L${x - 1},${y + 3} z`)
+          .attr('fill', color);
+      },
+    },
+    'zero-or-more-start': {
+      id: 'marker-zero-or-more-start',
       viewBox: '0 0 18 12',
       refX: 2,
       refY: 6,
       markerWidth: 14,
       markerHeight: 10,
-      content: marker => {
+      renderFn: (marker, color, strokeColor, highlighted, greyedOut) => {
         marker.append('path').attr('d', 'M9,2 L2,6 L9,10 z').attr('fill', color);
 
         marker
@@ -191,16 +231,18 @@ export class MarkerDefinitions {
           .attr('stroke', strokeColor)
           .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 1.5);
       },
-    });
-
-    // One or more marker (line + arrow)
-    this.createMarkerIfNotExists(defs, `${prefix}marker-one-or-more${suffix}`, {
+      renderInlineFn: () => {
+        // Not used in inline rendering
+      },
+    },
+    'one-or-more': {
+      id: 'marker-one-or-more',
       viewBox: '0 0 18 12',
       refX: 16,
       refY: 6,
       markerWidth: 14,
       markerHeight: 10,
-      content: marker => {
+      renderFn: (marker, color, strokeColor, highlighted, greyedOut) => {
         marker
           .append('line')
           .attr('x1', 4)
@@ -212,16 +254,30 @@ export class MarkerDefinitions {
 
         marker.append('path').attr('d', 'M9,2 L16,6 L9,10 z').attr('fill', color);
       },
-    });
+      renderInlineFn: (group, x, y, color, strokeColor) => {
+        group
+          .append('line')
+          .attr('x1', x - 6)
+          .attr('y1', y - 4)
+          .attr('x2', x - 6)
+          .attr('y2', y + 4)
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', 1.5);
 
-    // One or more start marker
-    this.createMarkerIfNotExists(defs, `${prefix}marker-one-or-more-start${suffix}`, {
+        group
+          .append('path')
+          .attr('d', `M${x - 1},${y - 3} L${x + 6},${y} L${x - 1},${y + 3} z`)
+          .attr('fill', color);
+      },
+    },
+    'one-or-more-start': {
+      id: 'marker-one-or-more-start',
       viewBox: '0 0 18 12',
       refX: 2,
       refY: 6,
       markerWidth: 14,
       markerHeight: 10,
-      content: marker => {
+      renderFn: (marker, color, strokeColor, highlighted, greyedOut) => {
         marker.append('path').attr('d', 'M9,2 L2,6 L9,10 z').attr('fill', color);
 
         marker
@@ -233,7 +289,64 @@ export class MarkerDefinitions {
           .attr('stroke', strokeColor)
           .attr('stroke-width', highlighted ? 2.5 : greyedOut ? 1 : 2);
       },
+      renderInlineFn: () => {
+        // Not used in inline rendering
+      },
+    },
+  };
+
+  public createAllMarkers(
+    svg: Selection<SVGSVGElement, unknown, null, undefined>,
+    config: MarkerConfig = { size: 'normal' }
+  ): void {
+    // Get or create defs element
+    let defs = svg.select<SVGDefsElement>('defs');
+    if (defs.empty()) {
+      defs = svg.append('defs');
+    }
+
+    const prefix = config.prefix || '';
+    const highlighted = config.highlighted || false;
+    const greyedOut = config.greyedOut || false;
+
+    // Set color based on state
+    const color = this.getColor(highlighted, greyedOut);
+    const strokeColor = color;
+
+    // Determine the marker suffix
+    const suffix = this.getSuffix(highlighted, greyedOut);
+
+    // Create all markers
+    Object.entries(this.markerDefs).forEach(([_, def]) => {
+      const markerId = `${prefix}${def.id}${suffix}`;
+      this.createMarkerIfNotExists(defs, markerId, {
+        viewBox: def.viewBox,
+        refX: def.refX,
+        refY: def.refY,
+        markerWidth: def.markerWidth,
+        markerHeight: def.markerHeight,
+        content: marker => def.renderFn(marker, color, strokeColor, highlighted, greyedOut),
+      });
     });
+  }
+
+  private getColor(highlighted: boolean, greyedOut: boolean): string {
+    if (highlighted) {
+      return '#8b5cf6'; // Purple for highlighted relationships
+    } else if (greyedOut) {
+      return '#9ca3af'; // Darker grey for greyed out to improve visibility
+    } else {
+      return '#0ea5e9'; // Sky blue for default state - colorful default
+    }
+  }
+
+  private getSuffix(highlighted: boolean, greyedOut: boolean): string {
+    if (highlighted) {
+      return '-highlighted';
+    } else if (greyedOut) {
+      return '-greyed';
+    }
+    return '';
   }
 
   private createMarkerIfNotExists(
@@ -274,83 +387,13 @@ export class MarkerDefinitions {
   ): void {
     // For legend drawing, use smaller versions of the RelationshipComponent markers
     const strokeColor = '#6b7280';
+    const color = strokeColor;
     const circleSize = 2.5;
 
-    switch (type) {
-      case 'one':
-        // Draw circle
-        group
-          .append('circle')
-          .attr('cx', x)
-          .attr('cy', y)
-          .attr('r', circleSize)
-          .attr('fill', 'none')
-          .attr('stroke', strokeColor)
-          .attr('stroke-width', 1.2);
-        break;
-
-      case 'many':
-        // Draw arrow
-        group
-          .append('path')
-          .attr('d', `M${x - 6},${y - 3} L${x + 3},${y} L${x - 6},${y + 3} z`)
-          .attr('fill', strokeColor);
-        break;
-
-      case 'zero-or-one':
-        // Draw circle + line (scaled down from RelationshipComponent)
-        group
-          .append('circle')
-          .attr('cx', x - 4)
-          .attr('cy', y)
-          .attr('r', circleSize)
-          .attr('fill', 'none')
-          .attr('stroke', strokeColor)
-          .attr('stroke-width', 1.2);
-
-        group
-          .append('line')
-          .attr('x1', x + 2)
-          .attr('y1', y - 4)
-          .attr('x2', x + 2)
-          .attr('y2', y + 4)
-          .attr('stroke', strokeColor)
-          .attr('stroke-width', 1.5);
-        break;
-
-      case 'zero-or-more':
-        // Draw circle + arrow (scaled down from RelationshipComponent)
-        group
-          .append('circle')
-          .attr('cx', x - 6)
-          .attr('cy', y)
-          .attr('r', circleSize)
-          .attr('fill', 'none')
-          .attr('stroke', strokeColor)
-          .attr('stroke-width', 1.2);
-
-        group
-          .append('path')
-          .attr('d', `M${x - 1},${y - 3} L${x + 6},${y} L${x - 1},${y + 3} z`)
-          .attr('fill', strokeColor);
-        break;
-
-      case 'one-or-more':
-        // Draw line + arrow (scaled down from RelationshipComponent)
-        group
-          .append('line')
-          .attr('x1', x - 6)
-          .attr('y1', y - 4)
-          .attr('x2', x - 6)
-          .attr('y2', y + 4)
-          .attr('stroke', strokeColor)
-          .attr('stroke-width', 1.5);
-
-        group
-          .append('path')
-          .attr('d', `M${x - 1},${y - 3} L${x + 6},${y} L${x - 1},${y + 3} z`)
-          .attr('fill', strokeColor);
-        break;
+    // Get the marker definition by type
+    const markerDef = this.markerDefs[type];
+    if (markerDef) {
+      markerDef.renderInlineFn(group, x, y, color, strokeColor, circleSize);
     }
   }
 }

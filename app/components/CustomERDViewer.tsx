@@ -12,6 +12,7 @@ import type {
 } from '../lib/erdRenderer/types/layout';
 
 import { LayoutControls } from './LayoutControls';
+import { Legend } from './Legend';
 import { LoadingOverlay } from './LoadingOverlay';
 
 interface CustomERDViewerProps {
@@ -23,8 +24,7 @@ interface CustomERDViewerProps {
 function useERDRenderer(
   onTableSelect: (tableId: string | null) => void,
   tables: Table[],
-  relationships: Relationship[],
-  showLegend: boolean
+  relationships: Relationship[]
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<ERDRenderer | null>(null);
@@ -46,10 +46,6 @@ function useERDRenderer(
       onRenderingProgress: (progress, stage) => {
         setLoadingProgress(progress);
         setLoadingStage(stage);
-      },
-      legendConfig: {
-        position: 'bottom-right',
-        show: showLegend,
       },
     };
 
@@ -107,6 +103,9 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
   const { tables, relationships } = useERD();
   const [showRelationships, setShowRelationships] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
+  const [legendPosition] = useState<'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'>(
+    'bottom-right'
+  );
   const [showLayoutControls, setShowLayoutControls] = useState(false);
 
   // Use our custom hook
@@ -122,7 +121,7 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
     setLoadingProgress,
     setLoadingStage,
     handleLoadingComplete,
-  } = useERDRenderer(onTableSelect, tables, relationships, showLegend);
+  } = useERDRenderer(onTableSelect, tables, relationships);
 
   // Handle table selection from external source
   useEffect(() => {
@@ -158,12 +157,8 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
   }, [renderer]);
 
   const handleToggleLegend = useCallback(() => {
-    setShowLegend(prev => {
-      const newVisibility = !prev;
-      renderer?.toggleLegend();
-      return newVisibility;
-    });
-  }, [renderer]);
+    setShowLegend(prev => !prev);
+  }, []);
 
   const handleLayoutChange = useCallback(
     async (config: {
@@ -229,10 +224,11 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={() => setShowLayoutControls(!showLayoutControls)}
             disabled={isLoading}
-            className={`p-2 rounded-md transition-colors focus-ring ${showLayoutControls
+            className={`p-2 rounded-md transition-colors focus-ring ${
+              showLayoutControls
                 ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                 : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title="Layout options"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,10 +245,11 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={handleToggleRelationships}
             disabled={isLoading}
-            className={`p-2 rounded-md transition-colors focus-ring ${showRelationships
+            className={`p-2 rounded-md transition-colors focus-ring ${
+              showRelationships
                 ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                 : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={showRelationships ? 'Hide relationships' : 'Show relationships'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -305,10 +302,11 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={handleToggleLegend}
             disabled={isLoading}
-            className={`p-2 rounded-md transition-colors focus-ring ${showLegend
+            className={`p-2 rounded-md transition-colors focus-ring ${
+              showLegend
                 ? 'bg-green-100 text-green-700 hover:bg-green-200'
                 : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={showLegend ? 'Hide legend' : 'Show legend'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,9 +331,12 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
       {/* Renderer Container */}
       <div
         ref={containerRef}
-        className="w-full h-full bg-white rounded-lg shadow-sm border border-secondary-200"
+        className="w-full h-full bg-white rounded-lg shadow-sm border border-secondary-200 relative"
         style={{ minHeight: '400px' }}
       />
+
+      {/* Legend Component - Render it directly here */}
+      {renderer && <Legend position={legendPosition} show={showLegend} responsive={true} />}
 
       {/* Info Panel */}
       <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg border border-secondary-200 p-3">
