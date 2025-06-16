@@ -3,6 +3,7 @@ import ELK, { type ElkNode, type ElkExtendedEdge } from 'elkjs/lib/elk.bundled.j
 import type { Table, Relationship } from '~/types/erd';
 
 import type { LayoutConfig } from '../types/layout';
+import { DEFAULT_LAYOUT_CONFIG } from '../types/layout';
 
 import type { Position } from './tableModel';
 
@@ -23,15 +24,7 @@ export class GraphLayoutEngine {
 
   constructor(config?: Partial<LayoutConfig>) {
     this.config = {
-      algorithm: 'layered',
-      direction: 'DOWN',
-      nodeSpacing: 50,
-      layerSpacing: 100,
-      marginX: 50,
-      marginY: 50,
-      centerHighConnectivityNodes: true,
-      hierarchyHandling: 'SEPARATE_CHILDREN',
-      nodePlacement: 'NETWORK_SIMPLEX',
+      ...DEFAULT_LAYOUT_CONFIG,
       ...config,
     };
 

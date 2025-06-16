@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 
-import { LAYOUT_OPTIONS } from '../lib/erdRenderer/types/layout';
+import { LAYOUT_OPTIONS, DEFAULT_LAYOUT_CONFIG } from '../lib/erdRenderer/types/layout';
 import type {
   LayoutAlgorithm,
   LayoutDirection,
   HierarchyHandling,
   NodePlacement,
+  LayoutConfig,
 } from '../lib/erdRenderer/types/layout';
 
 export interface LayoutControlsProps {
@@ -19,43 +20,14 @@ export interface LayoutControlsProps {
   }) => Promise<void>;
 }
 
-export interface LayoutState {
-  algorithm: LayoutAlgorithm;
-  direction: LayoutDirection;
-  hierarchyHandling: HierarchyHandling;
-  nodePlacement: NodePlacement;
-}
-
 export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutControlsProps) {
   // Track current layout settings to show selected state
-  const [currentLayout, setCurrentLayout] = useState<LayoutState>(() => {
-    // Load from localStorage if available
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('erd-layout-settings');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.warn('Failed to parse saved layout settings:', e);
-        }
-      }
-    }
-
-    // Default settings
-    return {
-      algorithm: 'layered' as LayoutAlgorithm,
-      direction: 'DOWN' as LayoutDirection,
-      hierarchyHandling: 'SEPARATE_CHILDREN' as HierarchyHandling,
-      nodePlacement: 'NETWORK_SIMPLEX' as NodePlacement,
-    };
-  });
-
-  // Save to localStorage when layout changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('erd-layout-settings', JSON.stringify(currentLayout));
-    }
-  }, [currentLayout]);
+  const [currentLayout, setCurrentLayout] = useState<Partial<LayoutConfig>>(() => ({
+    algorithm: DEFAULT_LAYOUT_CONFIG.algorithm,
+    direction: DEFAULT_LAYOUT_CONFIG.direction,
+    hierarchyHandling: DEFAULT_LAYOUT_CONFIG.hierarchyHandling,
+    nodePlacement: DEFAULT_LAYOUT_CONFIG.nodePlacement,
+  }));
 
   const handleChangeLayoutDirection = async (direction: LayoutDirection) => {
     setCurrentLayout(prev => ({ ...prev, direction }));
@@ -100,10 +72,10 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
             📐 {currentLayout.direction}
           </span>
           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-purple-100 text-purple-800 border border-purple-200">
-            🌲 {currentLayout.hierarchyHandling.replace('_', ' ')}
+            🌲 {currentLayout.hierarchyHandling?.replace('_', ' ') ?? ''}
           </span>
           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-orange-100 text-orange-800 border border-orange-200">
-            📍 {currentLayout.nodePlacement.replace('_', ' ')}
+            📍 {currentLayout.nodePlacement?.replace('_', ' ') ?? ''}
           </span>
         </div>
       </div>
@@ -124,13 +96,12 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
                   key={value}
                   onClick={() => handleChangeLayoutAlgorithm(value)}
                   disabled={isLoading}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    currentLayout.algorithm === value
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : isLoading
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'bg-white hover:bg-blue-100 border border-blue-200'
-                  }`}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${currentLayout.algorithm === value
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : isLoading
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'bg-white hover:bg-blue-100 border border-blue-200'
+                    }`}
                 >
                   {value}
                 </button>
@@ -144,13 +115,12 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
                     key={value}
                     onClick={() => handleChangeLayoutAlgorithm(value)}
                     disabled={isLoading}
-                    className={`px-2 py-1 text-xs rounded transition-colors ${
-                      currentLayout.algorithm === value
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : isLoading
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'bg-white hover:bg-blue-100 border border-blue-200'
-                    }`}
+                    className={`px-2 py-1 text-xs rounded transition-colors ${currentLayout.algorithm === value
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : isLoading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'bg-white hover:bg-blue-100 border border-blue-200'
+                      }`}
                   >
                     {value}
                   </button>
@@ -171,13 +141,12 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
                   key={value}
                   onClick={() => handleChangeLayoutDirection(value)}
                   disabled={isLoading}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    currentLayout.direction === value
-                      ? 'bg-green-600 text-white shadow-md'
-                      : isLoading
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'bg-white hover:bg-green-100 border border-green-200'
-                  }`}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${currentLayout.direction === value
+                    ? 'bg-green-600 text-white shadow-md'
+                    : isLoading
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'bg-white hover:bg-green-100 border border-green-200'
+                    }`}
                 >
                   {value}
                 </button>
@@ -200,13 +169,12 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
                   key={value}
                   onClick={() => handleChangeHierarchyHandling(value)}
                   disabled={isLoading}
-                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${
-                    currentLayout.hierarchyHandling === value
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : isLoading
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'bg-white hover:bg-purple-100 border border-purple-200'
-                  }`}
+                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${currentLayout.hierarchyHandling === value
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : isLoading
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'bg-white hover:bg-purple-100 border border-purple-200'
+                    }`}
                 >
                   {value.replace('_', ' ')}
                 </button>
@@ -226,13 +194,12 @@ export function LayoutControls({ isVisible, isLoading, onLayoutChange }: LayoutC
                   key={value}
                   onClick={() => handleChangeNodePlacement(value)}
                   disabled={isLoading}
-                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${
-                    currentLayout.nodePlacement === value
-                      ? 'bg-orange-600 text-white shadow-md'
-                      : isLoading
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'bg-white hover:bg-orange-100 border border-orange-200'
-                  }`}
+                  className={`w-full px-2 py-1 text-xs rounded transition-colors text-left ${currentLayout.nodePlacement === value
+                    ? 'bg-orange-600 text-white shadow-md'
+                    : isLoading
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'bg-white hover:bg-orange-100 border border-orange-200'
+                    }`}
                 >
                   {value.replace('_', ' ')}
                 </button>

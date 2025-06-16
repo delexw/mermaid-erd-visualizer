@@ -7,7 +7,12 @@ interface LoadingOverlayProps {
   onLoadingComplete?: () => void;
 }
 
-export function LoadingOverlay({ isLoading, progress, stage, onLoadingComplete }: LoadingOverlayProps) {
+export function LoadingOverlay({
+  isLoading,
+  progress,
+  stage,
+  onLoadingComplete,
+}: LoadingOverlayProps) {
   // Handle completion when progress reaches 100%
   useEffect(() => {
     if (progress >= 100 && isLoading) {
@@ -40,9 +45,7 @@ export function LoadingOverlay({ isLoading, progress, stage, onLoadingComplete }
       <div className="text-xs text-secondary-500">{`${Math.min(progress, 100)}% complete`}</div>
 
       {/* Status Text */}
-      <div className="text-xs text-secondary-400 mt-2">
-        {stage}
-      </div>
+      <div className="text-xs text-secondary-400 mt-2">{stage}</div>
     </div>
   );
-} 
+}

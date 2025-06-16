@@ -279,7 +279,7 @@ export class TableComponent {
     }
   };
 
-  private handleMouseUp = (event: MouseEvent): void => {
+  private handleMouseUp = (): void => {
     // Stop dragging
     if (this.model.isDragging) {
       this.model.setDragging(false);

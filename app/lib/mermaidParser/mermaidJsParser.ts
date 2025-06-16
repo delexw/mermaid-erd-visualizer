@@ -1,5 +1,13 @@
 import mermaid from 'mermaid';
-import type { Table, TableField, Relationship as AppRelationship, CardinalityInfo, ParseResult, ParseError } from '~/types/erd';
+
+import type {
+  Table,
+  TableField,
+  Relationship as AppRelationship,
+  CardinalityInfo,
+  ParseResult,
+  ParseError,
+} from '~/types/erd';
 
 // Define types based on the actual output from Mermaid.js API
 interface MermaidAttribute {
@@ -73,20 +81,14 @@ function mapCardinality(cardType: string): CardinalityInfo {
  * Maps Mermaid relationship cardinality combinations to our application's relationship types
  */
 function determineRelationshipType(leftCard: string, rightCard: string): AppRelationship['type'] {
-  if (
-    leftCard === 'ZERO_OR_MORE' ||
-    leftCard === 'ONE_OR_MORE'
-  ) {
+  if (leftCard === 'ZERO_OR_MORE' || leftCard === 'ONE_OR_MORE') {
     if (rightCard === 'ZERO_OR_MORE' || rightCard === 'ONE_OR_MORE') {
       return 'many-to-many';
     }
     return 'one-to-many'; // Inverted because of the mapping in the task description
   }
 
-  if (
-    rightCard === 'ZERO_OR_MORE' ||
-    rightCard === 'ONE_OR_MORE'
-  ) {
+  if (rightCard === 'ZERO_OR_MORE' || rightCard === 'ONE_OR_MORE') {
     return 'one-to-many';
   }
 
@@ -110,7 +112,7 @@ export async function parseMermaidERDWithJS(diagramText: string): Promise<ParseR
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'loose',
-    er: { useMaxWidth: false }
+    er: { useMaxWidth: false },
   });
 
   try {
@@ -192,8 +194,10 @@ export async function parseMermaidERDWithJS(diagramText: string): Promise<ParseR
           // Find a relationship where this table is the target
           const relationship = incomingRelationships.find(rel => {
             // This is a simple heuristic - we assume the field name contains the source table name or 'id'
-            return field.name.toLowerCase().includes(rel.fromTable.toLowerCase()) ||
-              field.name.toLowerCase().includes('id');
+            return (
+              field.name.toLowerCase().includes(rel.fromTable.toLowerCase()) ||
+              field.name.toLowerCase().includes('id')
+            );
           });
 
           if (relationship) {
@@ -226,4 +230,4 @@ export async function parseMermaidERDWithJS(diagramText: string): Promise<ParseR
       errors: [parseError],
     };
   }
-} 
+}

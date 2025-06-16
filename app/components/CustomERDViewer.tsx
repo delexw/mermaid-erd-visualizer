@@ -30,14 +30,6 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
   const [showLayoutControls, setShowLayoutControls] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Default layout settings to pass to layout controls
-  const defaultLayout = {
-    algorithm: 'layered' as LayoutAlgorithm,
-    direction: 'DOWN' as LayoutDirection,
-    hierarchyHandling: 'SEPARATE_CHILDREN' as HierarchyHandling,
-    nodePlacement: 'NETWORK_SIMPLEX' as NodePlacement,
-  };
-
   // Initialize renderer
   useEffect(() => {
     if (!containerRef.current) return;
@@ -60,10 +52,7 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
 
     rendererRef.current = new ERDRenderer(config);
 
-    // Apply default layout settings
-    if (rendererRef.current) {
-      rendererRef.current.updateLayoutConfig(defaultLayout);
-    }
+    console.log('Created ERDRenderer');
 
     return () => {
       rendererRef.current?.destroy();

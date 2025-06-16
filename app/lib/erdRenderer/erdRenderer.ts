@@ -1,5 +1,5 @@
 import { select, type Selection } from 'd3-selection';
-import { zoom, zoomIdentity, zoomTransform, type ZoomBehavior } from 'd3-zoom';
+import { zoom, zoomTransform, type ZoomBehavior } from 'd3-zoom';
 
 import 'd3-transition';
 import type { Table, Relationship } from '~/types/erd';
@@ -13,7 +13,7 @@ import { RelationshipModel } from './models/relationshipModel';
 import { TableModel } from './models/tableModel';
 import { RelationshipGrouper } from './utils/relationshipGrouper';
 import { RelationshipPositionCalculator } from './utils/relationshipPositionCalculator';
-import { applyZoomToFit, calculateTablesBoundingBox, type ZoomOptions } from './utils/zoomUtils';
+import { applyZoomToFit, calculateTablesBoundingBox } from './utils/zoomUtils';
 // Zoom level constants (should match setupZoom scaleExtent)
 const MIN_ZOOM_LEVEL = 0.01;
 const MAX_ZOOM_LEVEL = 5;
@@ -278,7 +278,7 @@ export class ERDRenderer {
       ...boundingBox,
       x: boundingBox.x - 50,
       y: boundingBox.y - 50,
-      width: boundingBox.width + 100,  // 50px padding on each side
+      width: boundingBox.width + 100, // 50px padding on each side
       height: boundingBox.height + 100, // 50px padding on each side
     };
 
@@ -287,7 +287,7 @@ export class ERDRenderer {
       minZoom: MIN_ZOOM_LEVEL,
       maxZoom: MAX_ZOOM_LEVEL,
       scaleFactor: 0.9, // Leave some margin
-      duration: 750
+      duration: 750,
     });
   }
 
@@ -321,7 +321,7 @@ export class ERDRenderer {
       minZoom: MIN_ZOOM_LEVEL,
       maxZoom: focusMaxZoom,
       padding: { factor: 0.6 }, // Leave 40% of the screen as padding around the table
-      duration: 750
+      duration: 750,
     });
   }
 
@@ -409,8 +409,7 @@ export class ERDRenderer {
       this.relationshipComponents.forEach(component => {
         const model = component.getModel();
         const isRelated =
-          this.selectedTables.has(model.fromTable) ||
-          this.selectedTables.has(model.toTable);
+          this.selectedTables.has(model.fromTable) || this.selectedTables.has(model.toTable);
 
         // Always keep relationships visible but grey out unrelated ones
         component.setVisible(true);
@@ -437,10 +436,7 @@ export class ERDRenderer {
 
     // Find relationships connected to selected tables
     this.relationshipModels.forEach((model, id) => {
-      if (
-        this.selectedTables.has(model.fromTable) ||
-        this.selectedTables.has(model.toTable)
-      ) {
+      if (this.selectedTables.has(model.fromTable) || this.selectedTables.has(model.toTable)) {
         relatedRelationshipIds.push(id);
       }
     });

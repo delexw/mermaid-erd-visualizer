@@ -22,6 +22,18 @@ export interface LayoutConfig {
   nodePlacement?: NodePlacement;
 }
 
+export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
+  algorithm: 'layered',
+  direction: 'UP',
+  nodeSpacing: 50,
+  layerSpacing: 100,
+  marginX: 50,
+  marginY: 50,
+  centerHighConnectivityNodes: true,
+  hierarchyHandling: 'SEPARATE_CHILDREN',
+  nodePlacement: 'NETWORK_SIMPLEX',
+};
+
 // Export arrays directly for UI rendering - ultimate DRY!
 export const LAYOUT_OPTIONS = {
   algorithms: ALGORITHMS,

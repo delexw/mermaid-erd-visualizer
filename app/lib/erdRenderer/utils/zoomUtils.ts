@@ -71,11 +71,7 @@ export function calculateZoomTransform(
   options: ZoomOptions = {}
 ): { translateX: number; translateY: number; scale: number } | null {
   // Default options
-  const {
-    minZoom = 0.01,
-    maxZoom = 5,
-    scaleFactor = 1
-  } = options;
+  const { minZoom = 0.01, maxZoom = 5, scaleFactor = 1 } = options;
 
   // Handle padding calculations
   let paddingPixels = 0;
@@ -208,4 +204,4 @@ export function calculateTablesBoundingBox(
     width: maxX - minX,
     height: maxY - minY,
   };
-} 
+}

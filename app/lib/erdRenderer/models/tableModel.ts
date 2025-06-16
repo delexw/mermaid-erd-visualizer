@@ -10,7 +10,7 @@ export interface Dimensions {
   height: number;
 }
 
-export interface TableBounds extends Position, Dimensions { }
+export interface TableBounds extends Position, Dimensions {}
 
 export class TableModel {
   public id: string;
