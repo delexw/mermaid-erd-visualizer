@@ -38,11 +38,6 @@ export default function Index() {
     setSelectedTable(prev => (prev === tableId ? null : tableId));
     // Clear relationship selection when table is selected
     setSelectedRelationship(prev => (prev !== null && tableId !== null ? null : prev));
-
-    // Open sidebar when a table is selected from the diagram
-    if (tableId !== null) {
-      setSidebarOpen(true);
-    }
   }, []);
 
   const handleDataParsed = useCallback(

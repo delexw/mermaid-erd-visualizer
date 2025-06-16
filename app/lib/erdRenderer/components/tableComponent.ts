@@ -113,7 +113,6 @@ export class TableComponent {
     tableDiv.on('click', event => {
       // Only handle click if we haven't moved (not a drag)
       if (!this.hasMoved) {
-        console.log('Table div clicked:', this.model.id);
         event.preventDefault();
         event.stopPropagation(); // Prevent SVG container from receiving the event
         this.onTableClick?.(this.model.id);
