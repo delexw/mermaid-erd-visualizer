@@ -53,7 +53,6 @@ function useERDRenderer(
     };
 
     rendererRef.current = new ERDRenderer(config);
-    console.log('Created ERDRenderer');
 
     return () => {
       rendererRef.current?.destroy();
@@ -81,12 +80,12 @@ function useERDRenderer(
     }
   }, [tables, relationships]);
 
-  const handleLoadingComplete = useCallback(() => {
+  const handleLoadingComplete = () => {
     setIsLoading(false);
     setDataLoaded(true);
     setLoadingProgress(0);
     setLoadingStage('');
-  }, []);
+  };
 
   return {
     containerRef,
@@ -229,11 +228,10 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={() => setShowLayoutControls(!showLayoutControls)}
             disabled={isLoading}
-            className={`p-2 rounded-md transition-colors focus-ring ${
-              showLayoutControls
-                ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`p-2 rounded-md transition-colors focus-ring ${showLayoutControls
+              ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+              : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title="Layout options"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,11 +248,10 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={handleToggleRelationships}
             disabled={isLoading}
-            className={`p-2 rounded-md transition-colors focus-ring ${
-              showRelationships
-                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`p-2 rounded-md transition-colors focus-ring ${showRelationships
+              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={showRelationships ? 'Hide relationships' : 'Show relationships'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -307,11 +304,10 @@ export default function CustomERDViewer({ selectedTable, onTableSelect }: Custom
           <button
             onClick={handleToggleLegend}
             disabled={isLoading}
-            className={`p-2 rounded-md transition-colors focus-ring ${
-              showLegend
-                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`p-2 rounded-md transition-colors focus-ring ${showLegend
+              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+              : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={showLegend ? 'Hide legend' : 'Show legend'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
