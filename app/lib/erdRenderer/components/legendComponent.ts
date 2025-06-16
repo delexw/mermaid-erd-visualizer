@@ -68,6 +68,7 @@ export class LegendComponent {
   }
 
   private render(): void {
+    console.log('Rendering legend', this.config.show);
     if (!this.config.show) {
       this.legendElement.style.display = 'none';
       return;

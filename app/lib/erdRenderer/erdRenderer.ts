@@ -24,7 +24,6 @@ export interface ERDRendererConfig {
   onLayoutChange?: () => void;
   onRenderingProgress?: (progress: number, stage: string) => void;
   layoutConfig?: Partial<LayoutConfig>;
-  showLegend?: boolean;
   legendConfig?: LegendConfig;
 }
 
@@ -155,7 +154,7 @@ export class ERDRenderer {
   }
 
   private setupLegend(): void {
-    if (this.config.showLegend !== false) {
+    if (this.config.legendConfig?.show) {
       // Default to responsive positioning
       const legendConfig = {
         responsive: true,
