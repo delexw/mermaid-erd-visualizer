@@ -1,0 +1,61 @@
+erDiagram
+    CUSTOMER {
+        int id PK
+        string name
+        string email
+        string phone
+        date created_at
+        date updated_at
+    }
+    
+    ORDER {
+        int id PK
+        int customer_id FK
+        date order_date
+        decimal total_amount
+        string status
+        string shipping_address
+    }
+    
+    ORDER_ITEM {
+        int id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal unit_price
+        decimal total_price
+    }
+    
+    PRODUCT {
+        int id PK
+        string name
+        string description
+        decimal price
+        int stock_quantity
+        int category_id FK
+        boolean is_active
+    }
+    
+    CATEGORY {
+        int id PK
+        string name
+        string description
+        int parent_id FK
+    }
+    
+    PAYMENT {
+        int id PK
+        int order_id FK
+        decimal amount
+        string payment_method
+        string transaction_id
+        date payment_date
+        string status
+    }
+    
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--o{ ORDER_ITEM : contains
+    PRODUCT ||--o{ ORDER_ITEM : included_in
+    PRODUCT }o--|| CATEGORY : belongs_to
+    CATEGORY ||--o{ CATEGORY : parent_of
+    ORDER ||--|| PAYMENT : has_payment 
