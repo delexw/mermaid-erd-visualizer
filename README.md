@@ -11,15 +11,33 @@ _Interactive ERD visualization showing database schema with tables, relationship
 - **Large Diagram Support**: Efficiently handles and renders large, complex ERD diagrams
 - **Interactive Visualization**: Pan, zoom, and explore your database schemas
 - **Mermaid Parser**: Comprehensive parsing and validation of Mermaid ERD syntax
+- **Drag & Drop**: Upload files from file system or code editors
+- **Real-time Parsing**: Instant feedback on syntax errors and warnings
 
-## Development
+## 🚀 Development
 
-Run the dev server:
+### Requirements
+
+- **Node.js**: >= 18.0.0 (LTS recommended)
+
+### Setup
 
 ```sh
+# Check Node.js version
+node --version
+
+# Install dependencies
 npm install
+
+# Start development server
 npm run dev
 ```
+
+### Supported File Formats
+
+- `.mmd` - Mermaid diagram files
+- `.md` - Markdown files with Mermaid ERD syntax
+- `.txt` - Plain text files with Mermaid ERD syntax
 
 ## Tech Stack
 

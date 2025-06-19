@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useFetcher } from '@remix-run/react';
 
 import {
   parseMermaidERD,
@@ -11,10 +12,20 @@ interface MermaidUploaderProps {
   onError: (errors: ParseError[]) => void;
 }
 
+// Type for the loader response
+interface FileLoaderData {
+  success: boolean;
+  content: string;
+  fileName: string;
+  error?: string;
+}
+
 export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const dragCounter = useRef(0);
+  const fetcher = useFetcher<FileLoaderData>();
 
   const processFile = useCallback(
     async (file: File) => {
@@ -47,6 +58,81 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
     [onDataParsed, onError]
   );
 
+  const processFileFromPath = useCallback(
+    (filePath: string, fileName?: string) => {
+      // Validate file path - reject browser security placeholders
+      if (filePath.includes('about:blank') || 
+          filePath.includes('#blocked') || 
+          filePath.startsWith('data:') ||
+          filePath.startsWith('blob:') ||
+          filePath.length < 3) {
+        onError([
+          {
+            line: 0,
+            message: 'Browser security restriction detected. Please drag the file directly from your file system (Finder/Explorer) instead of from VS Code.',
+          },
+        ]);
+        return;
+      }
+
+      // Additional validation for proper file paths
+      if (!filePath.includes('/') && !filePath.includes('\\')) {
+        onError([
+          {
+            line: 0,
+            message: 'Invalid file path format. Please drag a file from your file system.',
+          },
+        ]);
+        return;
+      }
+
+      setUploadedFileName(fileName || 'Loading...');
+      
+      // Use Remix fetcher to load the file
+      fetcher.load(`/api/read-file?filePath=${encodeURIComponent(filePath)}`);
+    },
+    [fetcher, onError]
+  );
+
+  // Handle fetcher state changes
+  useEffect(() => {
+    if (fetcher.state === 'idle' && fetcher.data) {
+      const result = fetcher.data;
+
+      if (result.error) {
+        onError([
+          {
+            line: 0,
+            message: result.error,
+          },
+        ]);
+        return;
+      }
+
+      if (result.success) {
+        setUploadedFileName(result.fileName);
+
+        // Parse the file content
+        parseMermaidERD(result.content)
+          .then(parseResult => {
+            if (!parseResult.success) {
+              onError(parseResult.errors);
+              return;
+            }
+            onDataParsed(parseResult.data);
+          })
+          .catch(error => {
+            onError([
+              {
+                line: 0,
+                message: `Error parsing file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              },
+            ]);
+          });
+      }
+    }
+  }, [fetcher.state, fetcher.data, onDataParsed, onError]);
+
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -57,28 +143,111 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
     [processFile]
   );
 
-  const handleDrop = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      setIsDragOver(false);
-
-      const file = event.dataTransfer.files[0];
-      if (file) {
-        processFile(file);
-      }
-    },
-    [processFile]
-  );
+  const handleDragEnter = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    dragCounter.current += 1;
+    if (dragCounter.current === 1) {
+      setIsDragOver(true);
+    }
+  }, []);
 
   const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    setIsDragOver(true);
+    event.stopPropagation();
   }, []);
 
   const handleDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    setIsDragOver(false);
+    event.stopPropagation();
+    
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) {
+      setIsDragOver(false);
+    }
   }, []);
+
+  const handleDrop = useCallback(
+    async (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      // Reset drag state
+      dragCounter.current = 0;
+      setIsDragOver(false);
+
+      const dataTransfer = event.dataTransfer;
+
+      // Case 1: Direct file drag from file system
+      if (dataTransfer.files && dataTransfer.files.length > 0) {
+        const file = dataTransfer.files[0];
+        processFile(file);
+        return;
+      }
+
+      // Case 2: Drag from VS Code or other IDEs
+
+      // Check if we have file paths from IDE
+      if (dataTransfer.types.includes('text/uri-list')) {
+        const uriList = dataTransfer.getData('text/uri-list');
+        
+        const uris = uriList.split('\n').filter(uri => uri.trim());
+        if (uris.length > 0) {
+          const filePath = uris[0].trim();
+          
+          // Check if it's a valid file URI
+          if (filePath.startsWith('file://') || filePath.startsWith('/')) {
+            const fileName = filePath.split('/').pop() || 'unknown';
+            processFileFromPath(filePath, fileName);
+            return;
+          }
+        }
+      }
+
+      // Check for plain text paths
+      if (dataTransfer.types.includes('text/plain')) {
+        const text = dataTransfer.getData('text/plain');
+        
+        // Check if it's a file path
+        if (text.includes('/') && (text.includes('.mmd') || text.includes('.md') || text.includes('.txt'))) {
+          const fileName = text.split('/').pop() || 'unknown';
+          processFileFromPath(text.trim(), fileName);
+          return;
+        }
+        
+        // Check if it's actual Mermaid content
+        if (text.trim().startsWith('erDiagram')) {
+          const fileName = 'pasted-content.mmd';
+          const file = new File([text], fileName, { type: 'text/plain' });
+          processFile(file);
+          return;
+        }
+      }
+
+      // Enhanced error message based on detected data types
+      let errorMessage = 'Unable to process the dropped content.';
+      
+      if (dataTransfer.types.includes('text/uri-list') || dataTransfer.types.includes('text/plain')) {
+        errorMessage = 'Browser security restrictions prevent reading files from VS Code. Please drag the file directly from your file system (Finder/Explorer) instead.';
+      } else if (dataTransfer.types.length === 0) {
+        errorMessage = 'No file data detected. Please ensure you are dragging a valid file.';
+      } else {
+        errorMessage = `Unsupported drag data types: ${dataTransfer.types.join(', ')}. Please drag a .mmd, .md, or .txt file directly from your file system.`;
+      }
+
+      onError([
+        {
+          line: 0,
+          message: errorMessage,
+        },
+      ]);
+    },
+    [processFile, processFileFromPath, onError]
+  );
+
+  // Combine loading states
+  const isLoading = isProcessing || fetcher.state === 'loading';
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -86,11 +255,12 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
         className={`
           relative border-2 border-dashed rounded-lg p-6 text-center transition-colors
           ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
-          ${isProcessing ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+          ${isLoading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
         `}
-        onDrop={handleDrop}
+        onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         onClick={() => document.getElementById('file-input')?.click()}
       >
         <input
@@ -99,14 +269,16 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
           accept=".mmd,.txt,.md"
           onChange={handleFileSelect}
           className="hidden"
-          disabled={isProcessing}
+          disabled={isLoading}
         />
 
         <div className="space-y-2">
-          {isProcessing ? (
+          {isLoading ? (
             <>
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-sm text-gray-600">Processing {uploadedFileName}...</p>
+              <p className="text-sm text-gray-600">
+                {fetcher.state === 'loading' ? 'Reading file...' : `Processing ${uploadedFileName}...`}
+              </p>
             </>
           ) : (
             <>
@@ -128,6 +300,12 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
                 <p className="text-sm font-medium text-gray-900">Upload Mermaid ERD File</p>
                 <p className="text-xs text-gray-500 mt-1">
                   Drop a .mmd, .txt, or .md file here, or click to browse
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  📁 Drag from file system (Finder/Explorer) for best results
+                </p>
+                <p className="text-xs text-orange-600 mt-1">
+                  ⚠️ VS Code/IDE drag may be blocked by browser security
                 </p>
               </div>
             </>
