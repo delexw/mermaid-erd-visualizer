@@ -61,7 +61,7 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
   const handleDragEnter = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    
+
     dragCounter.current += 1;
     if (dragCounter.current === 1) {
       setIsDragOver(true);
@@ -76,7 +76,7 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
   const handleDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    
+
     dragCounter.current -= 1;
     if (dragCounter.current === 0) {
       setIsDragOver(false);
@@ -87,7 +87,7 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
     async (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
       event.stopPropagation();
-      
+
       // Reset drag state
       dragCounter.current = 0;
       setIsDragOver(false);
@@ -97,26 +97,30 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
       // ✅ UNIVERSAL: Use browser's secure File API (works in all browsers)
       if (dataTransfer.files && dataTransfer.files.length > 0) {
         const file = dataTransfer.files[0];
-        
+
         // ✅ SECURITY: Validate file type (don't trust extensions in paths)
         const validExtensions = ['.mmd', '.md', '.txt'];
         const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-        
+
         if (!validExtensions.includes(fileExtension)) {
-          onError([{
-            line: 0,
-            message: `Unsupported file type: ${fileExtension}. Please use .mmd, .md, or .txt files.`,
-          }]);
+          onError([
+            {
+              line: 0,
+              message: `Unsupported file type: ${fileExtension}. Please use .mmd, .md, or .txt files.`,
+            },
+          ]);
           return;
         }
 
         // ✅ SECURITY: Validate file size (prevent memory exhaustion)
         const maxSize = 10 * 1024 * 1024; // 10MB
         if (file.size > maxSize) {
-          onError([{
-            line: 0,
-            message: `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum size is 10MB.`,
-          }]);
+          onError([
+            {
+              line: 0,
+              message: `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum size is 10MB.`,
+            },
+          ]);
           return;
         }
 
@@ -128,7 +132,7 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
       // ✅ UNIVERSAL: Handle text content (but validate it's actual content, not paths)
       if (dataTransfer.types.includes('text/plain')) {
         const text = dataTransfer.getData('text/plain');
-        
+
         // ✅ SECURITY: Only accept actual Mermaid content, not file paths
         if (text.trim().startsWith('erDiagram')) {
           // Create a virtual file from the content
@@ -137,13 +141,16 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
           processFile(file);
           return;
         }
-        
+
         // 🚫 REJECT: File paths, URLs, or other non-content data
         if (text.includes('/') || text.includes('\\') || text.startsWith('file://')) {
-          onError([{
-            line: 0,
-            message: 'File paths are not supported for security reasons. Please drag the actual file from your file system.',
-          }]);
+          onError([
+            {
+              line: 0,
+              message:
+                'File paths are not supported for security reasons. Please drag the actual file from your file system.',
+            },
+          ]);
           return;
         }
       }
@@ -152,7 +159,8 @@ export function MermaidUploader({ onDataParsed, onError }: MermaidUploaderProps)
       onError([
         {
           line: 0,
-          message: 'For security reasons, only direct file system drags are supported. Please drag the file from Finder/Explorer, or use the browse button to select your file.',
+          message:
+            'For security reasons, only direct file system drags are supported. Please drag the file from Finder/Explorer, or use the browse button to select your file.',
         },
       ]);
     },

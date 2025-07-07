@@ -1,5 +1,6 @@
 import type { MetaFunction } from '@remix-run/node';
-import { useState, useCallback } from 'react';
+import { useSearchParams } from '@remix-run/react';
+import { useState, useCallback, useEffect } from 'react';
 
 import CustomERDViewer from '~/components/CustomERDViewer';
 import Header from '~/components/Header';
@@ -10,6 +11,7 @@ import {
 } from '~/components/MermaidUploader';
 import Sidebar from '~/components/Sidebar';
 import { useERD } from '~/contexts/ERDContext';
+import { loadERDFile, validateFilePath } from '~/lib/fileLoader';
 import type { ParsedERD, ParseError } from '~/lib/mermaidParser/mermaidParser';
 
 export const meta: MetaFunction = () => {
@@ -24,12 +26,14 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
+  const [searchParams] = useSearchParams();
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [selectedRelationship, setSelectedRelationship] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [parseErrors, setParseErrors] = useState<ParseError[]>([]);
   const [parseSuccess, setParseSuccess] = useState<ParsedERD | null>(null);
+  const [isAutoLoading, setIsAutoLoading] = useState(false);
 
   const { loadData, clearData, hasData, uploadedFileName } = useERD();
 
@@ -85,6 +89,57 @@ export default function Index() {
   const dismissParseSuccess = useCallback(() => {
     setParseSuccess(null);
   }, []);
+
+  // Auto-load file from URL parameters
+  useEffect(() => {
+    const filePath = searchParams.get('file');
+    if (filePath && !hasData && !isAutoLoading) {
+      setIsAutoLoading(true);
+
+      // Validate file path
+      const validation = validateFilePath(filePath);
+      if (!validation.valid) {
+        setParseErrors([
+          {
+            line: 0,
+            message: validation.error || 'Invalid file path',
+          },
+        ]);
+        setIsAutoLoading(false);
+        return;
+      }
+
+      // Load the file
+      loadERDFile(filePath)
+        .then(result => {
+          if (result.success && result.data) {
+            loadData(result.data, result.fileName || filePath);
+            setParseSuccess(result.data);
+            setParseErrors([]);
+          } else {
+            setParseErrors(
+              result.errors || [
+                {
+                  line: 0,
+                  message: 'Failed to load ERD file',
+                },
+              ]
+            );
+          }
+        })
+        .catch(error => {
+          setParseErrors([
+            {
+              line: 0,
+              message: `Error loading file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            },
+          ]);
+        })
+        .finally(() => {
+          setIsAutoLoading(false);
+        });
+    }
+  }, [searchParams, hasData, isAutoLoading, loadData]);
 
   // Using setSelectedRelationship directly as it doesn't need any additional logic
 
@@ -161,42 +216,52 @@ export default function Index() {
             </div>
           </>
         ) : (
-          /* When no diagram: full-screen centered uploader */
+          /* When no diagram: full-screen centered uploader or auto-loading */
           <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center max-w-2xl px-4">
-              <svg
-                className="mx-auto h-20 w-20 text-gray-400 mb-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1}
-                  d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 17a2 2 0 002-2V7a2 2 0 00-2-2M9 17h6a2 2 0 002-2V7a2 2 0 00-2-2H9m12 0H9"
-                />
-              </svg>
-              <h3 className="text-2xl font-medium text-gray-900 mb-4">Welcome to ERD Explorer</h3>
-              <p className="text-lg text-gray-600 mb-8">
-                Upload a Mermaid ERD diagram to start exploring your database schema with our
-                interactive viewer.
-              </p>
+            {isAutoLoading ? (
+              <div className="text-center max-w-2xl px-4">
+                <div className="animate-spin rounded-full h-20 w-20 border-b-2 border-blue-600 mx-auto mb-6"></div>
+                <h3 className="text-2xl font-medium text-gray-900 mb-4">Loading ERD File...</h3>
+                <p className="text-lg text-gray-600 mb-8">
+                  Auto-loading diagram from: {searchParams.get('file')}
+                </p>
+              </div>
+            ) : (
+              <div className="text-center max-w-2xl px-4">
+                <svg
+                  className="mx-auto h-20 w-20 text-gray-400 mb-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 17a2 2 0 002-2V7a2 2 0 00-2-2M9 17h6a2 2 0 002-2V7a2 2 0 00-2-2H9m12 0H9"
+                  />
+                </svg>
+                <h3 className="text-2xl font-medium text-gray-900 mb-4">Welcome to ERD Explorer</h3>
+                <p className="text-lg text-gray-600 mb-8">
+                  Upload a Mermaid ERD diagram to start exploring your database schema with our
+                  interactive viewer.
+                </p>
 
-              <MermaidUploader onDataParsed={handleDataParsed} onError={handleParseError} />
+                <MermaidUploader onDataParsed={handleDataParsed} onError={handleParseError} />
 
-              {parseErrors.length > 0 && (
-                <div className="mt-6">
-                  <ParseErrorDisplay errors={parseErrors} onDismiss={dismissParseErrors} />
-                </div>
-              )}
+                {parseErrors.length > 0 && (
+                  <div className="mt-6">
+                    <ParseErrorDisplay errors={parseErrors} onDismiss={dismissParseErrors} />
+                  </div>
+                )}
 
-              {parseSuccess && (
-                <div className="mt-6">
-                  <ParseSuccessDisplay data={parseSuccess} onDismiss={dismissParseSuccess} />
-                </div>
-              )}
-            </div>
+                {parseSuccess && (
+                  <div className="mt-6">
+                    <ParseSuccessDisplay data={parseSuccess} onDismiss={dismissParseSuccess} />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
