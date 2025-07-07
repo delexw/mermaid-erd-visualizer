@@ -3,6 +3,7 @@ node_modules
 /.cache
 /build
 .env
+/dist-singlehtml
 
 # macOS system files
 .DS_Store
